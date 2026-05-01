@@ -1,0 +1,508 @@
+/* Documents page */
+
+.documents-page-view {
+    background-color: var(--accent-color);
+}
+
+.documents-page {
+    background-color: var(--accent-color);
+}
+
+.page-hero-section {
+    padding: 60px 0;
+    background-color: var(--accent-color);
+}
+
+.page-hero-header {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.page-hero-header h1 {
+    margin: 0 0 18px;
+    font-size: 2.8rem;
+    line-height: 1.1;
+    color: var(--dark-text);
+}
+
+.page-hero-header p {
+    max-width: 760px;
+    margin: 0 auto;
+    font-size: 1.02rem;
+    line-height: 1.8;
+    color: #5b6774;
+}
+
+.info-documents-section {
+    padding: 0 0 60px;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--accent-color);
+}
+
+.info-documents-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+.documents-sea-decor {
+    position: absolute;
+    inset: 0;
+    display: none !important;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.documents-sea {
+    position: absolute;
+    color: rgba(var(--primary-color-rgb), 0.07);
+    pointer-events: none;
+    line-height: 1;
+}
+
+.documents-sea--anchor-lg {
+    font-size: 200px;
+    top: -40px;
+    right: 22%;
+    transform: rotate(-10deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.documents-sea--anchor-sm {
+    font-size: 72px;
+    top: 84%;
+    left: 6%;
+    transform: rotate(15deg);
+    color: rgba(var(--primary-color-rgb), 0.08);
+}
+
+.documents-sea--fish {
+    font-size: 52px;
+    top: 16%;
+    left: 36%;
+    transform: scaleX(-1) rotate(-8deg);
+    color: rgba(var(--primary-color-rgb), 0.07);
+}
+
+.documents-sea--wave {
+    font-size: 86px;
+    top: 91%;
+    right: 7%;
+    color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.documents-sea--ship {
+    font-size: 44px;
+    top: 12%;
+    right: 4%;
+    transform: rotate(5deg);
+    color: rgba(var(--primary-color-rgb), 0.08);
+}
+
+.documents-sea--binoculars {
+    font-size: 42px;
+    top: 9%;
+    left: 8%;
+    transform: rotate(-10deg);
+    color: rgba(var(--primary-color-rgb), 0.07);
+}
+
+.documents-sea--compass {
+    font-size: 62px;
+    top: 52%;
+    right: 17%;
+    transform: rotate(12deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.documents-sea--lighthouse {
+    font-size: 58px;
+    top: 66%;
+    left: 12%;
+    transform: rotate(4deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.info-documents-section .section-header h2::after {
+    display: block;
+    background-color: var(--primary-color);
+}
+
+.info-documents-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+    align-items: stretch;
+}
+
+.info-document-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding: 18px 18px 16px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(var(--primary-color-rgb), 0.12);
+    box-shadow: 0 14px 30px rgba(16, 52, 92, 0.08);
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+.info-document-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(var(--primary-color-rgb), 0.1), transparent 55%);
+    opacity: 0;
+    transition: opacity 0.24s ease;
+    pointer-events: none;
+}
+
+.info-document-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(var(--primary-color-rgb), 0.2);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+.info-document-card:hover::before {
+    opacity: 1;
+}
+
+.info-document-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.info-document-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.info-document-label {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    width: fit-content;
+    padding: 0.2rem 0.7rem;
+    margin-bottom: 0.75rem;
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    border-radius: 6px;
+    color: var(--primary-color);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.info-document-card h3 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    line-height: 1.4;
+    color: var(--dark-text);
+}
+
+.info-document-card p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #5b6774;
+}
+
+.info-document-chevron {
+    width: 32px;
+    height: 32px;
+    margin-top: 12px;
+    margin-left: auto;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--primary-color-rgb), 0.08);
+    color: var(--primary-color);
+    transition: transform 0.24s ease, background-color 0.24s ease, color 0.24s ease;
+}
+
+.info-document-chevron i {
+    margin: 0;
+    line-height: 1;
+    font-size: 0.75rem;
+}
+
+.info-document-card:hover .info-document-chevron {
+    transform: translateX(3px);
+    background: var(--primary-color);
+    color: var(--light-text);
+}
+
+.info-note-section {
+    padding: 0 0 84px;
+}
+
+.info-note-card {
+    display: flex;
+    align-items: flex-start;
+    padding: 30px 34px;
+    border-radius: 24px;
+    background: #fff;
+    border: 1px solid rgba(var(--primary-color-rgb), 0.12);
+    box-shadow: 0 18px 38px rgba(16, 52, 92, 0.08);
+}
+
+.info-note-content h2 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    line-height: 1.4;
+}
+
+.info-note-content p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #4f5d6d;
+    line-height: 1.5;
+}
+
+@media (max-width: 1280px) {
+    .info-documents-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1100px) {
+    .info-documents-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-auto-rows: 1fr;
+    }
+
+    .info-document-card {
+        padding: 1.25rem 1.5rem 1.5rem;
+        height: 100%;
+    }
+
+    .info-document-body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-document-card h3 {
+        min-height: 0;
+        margin-bottom: 0.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .info-document-card p {
+        font-size: 0.88rem;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .info-document-label {
+        margin-bottom: 0.75rem;
+    }
+
+    .info-note-content p {
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+}
+
+@media (max-width: 1199px) {
+    .info-documents-section {
+        padding: 0 0 56px;
+    }
+}
+
+@media (max-width: 900px) {
+    .documents-sea-decor {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(4, minmax(90px, 1fr));
+        align-content: space-between;
+        padding: 24px clamp(12px, 4vw, 28px) 36px;
+    }
+
+    .documents-sea {
+        position: relative;
+        top: auto;
+        right: auto;
+        bottom: auto;
+        left: auto;
+    }
+
+    .documents-sea--anchor-lg {
+        grid-row: 1;
+        grid-column: 2;
+        justify-self: end;
+        align-self: start;
+        font-size: clamp(120px, 18vw, 170px);
+    }
+
+    .documents-sea--binoculars {
+        grid-row: 1;
+        grid-column: 1;
+        justify-self: start;
+        align-self: center;
+        font-size: clamp(30px, 6vw, 40px);
+    }
+
+    .documents-sea--fish {
+        grid-row: 2;
+        grid-column: 1;
+        justify-self: start;
+        align-self: center;
+        font-size: clamp(38px, 7vw, 50px);
+    }
+
+    .documents-sea--ship {
+        grid-row: 2;
+        grid-column: 2;
+        justify-self: center;
+        align-self: start;
+        font-size: clamp(34px, 6vw, 44px);
+    }
+
+    .documents-sea--lighthouse {
+        grid-row: 3;
+        grid-column: 1;
+        justify-self: start;
+        align-self: center;
+        font-size: clamp(48px, 8vw, 64px);
+    }
+
+    .documents-sea--compass {
+        grid-row: 3;
+        grid-column: 2;
+        justify-self: end;
+        align-self: center;
+        font-size: clamp(44px, 8vw, 60px);
+    }
+
+    .documents-sea--anchor-sm {
+        grid-row: 4;
+        grid-column: 1;
+        justify-self: start;
+        align-self: end;
+        font-size: clamp(52px, 9vw, 70px);
+    }
+
+    .documents-sea--wave {
+        grid-row: 4;
+        grid-column: 2;
+        justify-self: end;
+        align-self: end;
+        font-size: clamp(62px, 11vw, 82px);
+    }
+
+    .info-documents-grid {
+        gap: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .info-documents-section {
+        padding: 0 0 44px;
+    }
+
+    .info-documents-section .section-header {
+        margin-bottom: 2rem;
+    }
+
+    .info-documents-section .section-header h2 {
+        font-size: 1.9rem;
+    }
+
+    .info-documents-section .section-header p {
+        font-size: 1rem;
+    }
+
+    .info-documents-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        grid-auto-rows: 1fr;
+    }
+
+    .info-document-card {
+        padding: 1.25rem 1.5rem 1.5rem;
+        min-height: 200px;
+    }
+
+    .info-note-card {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-documents-section {
+        padding: 0 0 32px;
+    }
+
+    .documents-sea-decor {
+        padding: 18px 10px 26px;
+    }
+
+    .documents-sea--anchor-lg {
+        font-size: clamp(96px, 26vw, 124px);
+    }
+
+    .documents-sea--fish {
+        font-size: 34px;
+    }
+
+    .documents-sea--ship {
+        font-size: 30px;
+    }
+
+    .documents-sea--binoculars {
+        font-size: 28px;
+    }
+
+    .documents-sea--compass {
+        font-size: 40px;
+    }
+
+    .documents-sea--lighthouse {
+        font-size: 42px;
+    }
+
+    .documents-sea--anchor-sm {
+        font-size: 46px;
+    }
+
+    .documents-sea--wave {
+        font-size: 56px;
+    }
+
+    .info-documents-section .section-header h2 {
+        font-size: 1.65rem;
+    }
+
+    .info-document-card h3 {
+        font-size: 1rem;
+    }
+
+    .info-document-card p {
+        font-size: 0.92rem;
+        line-height: 1.6;
+    }
+
+    .info-note-content h2 {
+        font-size: 1rem;
+    }
+
+    .info-note-content p {
+        font-size: 0.92rem;
+        line-height: 1.6;
+    }
+}

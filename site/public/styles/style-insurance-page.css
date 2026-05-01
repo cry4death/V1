@@ -1,0 +1,1072 @@
+/* Insurance clients page */
+
+.insurance-page-view {
+    background-color: var(--accent-color);
+}
+
+.insurance-page {
+    --ins-border: rgba(var(--primary-color-rgb), 0.16);
+    --ins-shadow: 0 10px 24px rgba(14, 52, 94, 0.1);
+    --ins-hover-shadow: 0 18px 34px rgba(14, 52, 94, 0.16);
+    --ins-hover-gradient: radial-gradient(circle at top right, rgba(var(--primary-color-rgb), 0.1), transparent 55%);
+    position: relative;
+    overflow: hidden;
+    background-color: var(--accent-color);
+}
+
+/* ─── Sea decorations (page-wide) ─── */
+
+.insurance-sea-decor {
+    position: absolute;
+    inset: 0;
+    display: none !important;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.insurance-sea {
+    position: absolute;
+    color: rgba(var(--primary-color-rgb), 0.07);
+    pointer-events: none;
+    line-height: 1;
+}
+
+.insurance-sea--anchor-lg {
+    font-size: 220px;
+    top: 30px;
+    right: 16%;
+    transform: rotate(-8deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.insurance-sea--anchor-sm {
+    font-size: 80px;
+    top: 91%;
+    left: 4%;
+    transform: rotate(14deg);
+    color: rgba(var(--primary-color-rgb), 0.08);
+}
+
+.insurance-sea--anchor-mid {
+    font-size: 100px;
+    top: 68%;
+    right: 4%;
+    transform: rotate(-18deg);
+    color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.insurance-sea--ship {
+    font-size: 58px;
+    top: 13%;
+    right: 5%;
+    transform: rotate(4deg);
+    color: rgba(var(--primary-color-rgb), 0.08);
+}
+
+.insurance-sea--fish {
+    font-size: 56px;
+    top: 26%;
+    left: 18%;
+    transform: scaleX(-1) rotate(-6deg);
+    color: rgba(var(--primary-color-rgb), 0.07);
+}
+
+.insurance-sea--wave {
+    font-size: 100px;
+    top: 90%;
+    right: 7%;
+    color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.insurance-sea--compass {
+    font-size: 70px;
+    top: 76%;
+    left: 54%;
+    transform: rotate(12deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.insurance-sea--binoculars {
+    font-size: 46px;
+    top: 18%;
+    left: 4%;
+    transform: rotate(-10deg);
+    color: rgba(var(--primary-color-rgb), 0.07);
+}
+
+.insurance-sea--lifebuoy {
+    font-size: 64px;
+    top: 42%;
+    left: 7%;
+    transform: rotate(10deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.insurance-sea--lighthouse {
+    font-size: 64px;
+    top: 58%;
+    left: 13%;
+    transform: rotate(5deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.insurance-sea--wave-mid {
+    font-size: 88px;
+    top: 58%;
+    right: 28%;
+    transform: rotate(-4deg);
+    color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.insurance-sea--ship-low {
+    font-size: 54px;
+    top: 83%;
+    right: 20%;
+    transform: rotate(6deg);
+    color: rgba(var(--primary-color-rgb), 0.07);
+}
+
+.insurance-sea--compass-low {
+    font-size: 62px;
+    top: 95%;
+    left: 34%;
+    transform: rotate(-12deg);
+    color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+/* ─── Shared card base ─── */
+
+.insurance-partners-card,
+.insurance-doc-card,
+.insurance-register-card,
+.insurance-register-note {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid var(--ins-border);
+    border-radius: 12px;
+    box-shadow: var(--ins-shadow);
+}
+
+.insurance-doc-card::before,
+.insurance-register-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ins-hover-gradient);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+}
+
+.insurance-doc-card > *,
+.insurance-register-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.insurance-doc-card,
+.insurance-register-card {
+    transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.insurance-doc-card:hover,
+.insurance-register-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--ins-hover-shadow);
+    border-color: rgba(var(--primary-color-rgb), 0.3);
+}
+
+.insurance-doc-card:hover::before,
+.insurance-register-card:hover::before {
+    opacity: 1;
+}
+
+/* ─── Hero + Partners (combined section) ─── */
+
+.insurance-intro-section {
+    padding: 0 0 56px;
+    background-color: transparent;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+/* ─── Sea decorations inside intro section ─── */
+
+.insurance-intro-sea {
+    position: absolute;
+    inset: 0;
+    display: none !important;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.insurance-intro-sea i {
+    position: absolute;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.ins-intro-sea--ship,
+.ins-intro-sea--anchor-sm,
+.ins-intro-sea--fish {
+    display: none;
+}
+
+.ins-intro-sea--anchor-lg {
+    font-size: 300px;
+    top: -50px;
+    right: 2%;
+    transform: rotate(-10deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.ins-intro-sea--lighthouse {
+    font-size: 200px;
+    bottom: -30px;
+    left: 1%;
+    transform: rotate(5deg);
+    color: rgba(var(--primary-color-rgb), 0.07);
+}
+
+.ins-intro-sea--ship {
+    font-size: 100px;
+    top: 18px;
+    right: 34%;
+    transform: rotate(5deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.ins-intro-sea--anchor-sm {
+    font-size: 140px;
+    bottom: 20px;
+    right: 22%;
+    transform: rotate(18deg);
+    color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.ins-intro-sea--wave {
+    font-size: 150px;
+    bottom: -15px;
+    left: 28%;
+    color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.ins-intro-sea--compass {
+    font-size: 82px;
+    top: 16%;
+    left: 20%;
+    transform: rotate(20deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.ins-intro-sea--fish {
+    font-size: 80px;
+    top: 55%;
+    right: 48%;
+    transform: scaleX(-1) rotate(-8deg);
+    color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.insurance-intro-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+.insurance-page-header {
+    margin-bottom: 0;
+}
+
+.insurance-page-header h1 {
+    position: relative;
+    display: inline-block;
+    margin: 0;
+    padding-bottom: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 2.25rem;
+    line-height: 1.25;
+    color: var(--dark-text);
+}
+
+.insurance-page-header h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background-color: var(--primary-color);
+}
+
+.insurance-page-header p {
+    max-width: 760px;
+    margin: 1.1rem auto 0;
+    color: #4a5c70;
+    font-size: 1.12rem;
+    line-height: 1.7;
+}
+
+.insurance-partners-wrap {
+    margin-top: 48px;
+}
+
+.insurance-partners-card {
+    padding: 32px 36px;
+    text-align: center;
+}
+
+.insurance-partners-img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 10px;
+}
+
+/* ─── Documents section ─── */
+
+.insurance-docs-section {
+    padding: 0 0 56px;
+    background-color: transparent;
+    position: relative;
+    z-index: 1;
+}
+
+.insurance-docs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.insurance-doc-card {
+    padding: 28px 26px;
+}
+
+.insurance-doc-card__icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff 0, rgba(232, 244, 253, 0.9) 40%, rgba(70, 130, 180, 0.15) 100%);
+    color: var(--primary-color);
+    font-size: 1.35rem;
+    margin-bottom: 18px;
+    flex-shrink: 0;
+}
+
+.insurance-doc-card__body h3 {
+    margin: 0 0 14px;
+    font-size: 1.1rem;
+    line-height: 1.35;
+    color: #183f5f;
+}
+
+.insurance-doc-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.insurance-doc-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #5a6e80;
+    line-height: 1.64;
+    font-size: 0.97rem;
+}
+
+.insurance-doc-list__icon {
+    flex-shrink: 0;
+    width: 1.1rem;
+    color: var(--primary-color);
+    margin-top: 0.22em;
+    font-size: 0.78rem;
+}
+
+/* ─── Register section ─── */
+
+.insurance-register-section {
+    padding: 0 0 72px;
+    background-color: transparent;
+    position: relative;
+    z-index: 1;
+}
+
+.insurance-register-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.insurance-register-card {
+    padding: 28px 30px;
+}
+
+.insurance-register-card--via {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.insurance-register-card--via::after {
+    display: none;
+}
+
+.insurance-register-card--via::before {
+    display: block;
+}
+
+.insurance-register-card__head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.insurance-register-card__title {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.insurance-register-card__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary-color);
+}
+
+.insurance-register-card__eyebrow::before {
+    content: '';
+    width: 26px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.insurance-register-card__icon {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff 0, rgba(232, 244, 253, 0.9) 40%, rgba(70, 130, 180, 0.15) 100%);
+    color: var(--primary-color);
+    font-size: 1.35rem;
+}
+
+.insurance-register-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #183f5f;
+    line-height: 1.3;
+}
+
+.insurance-register-card > p {
+    margin: 0;
+    color: #5b6f82;
+    line-height: 1.75;
+    font-size: 0.97rem;
+}
+
+.insurance-register-card--via > p {
+    margin-bottom: 22px;
+}
+
+.insurance-register-flow {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(var(--primary-color-rgb), 0.12);
+    background: var(--accent-color);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.insurance-register-flow__label {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    padding: 0.2rem 0.7rem;
+    border-radius: 6px;
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.insurance-register-flow__steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.insurance-register-flow__steps li {
+    display: block;
+    padding: 14px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(var(--primary-color-rgb), 0.1);
+    background: rgba(255, 255, 255, 0.78);
+}
+
+.insurance-register-flow__steps strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #183f5f;
+    font-size: 0.92rem;
+    line-height: 1.35;
+}
+
+.insurance-register-flow__steps span {
+    display: block;
+    color: #5b6f82;
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+.insurance-register-flow__footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #214767;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.insurance-register-flow__footer i {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+/* ─── Sea decor inside card ─── */
+
+.insurance-card-sea {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 28px;
+    padding-top: 16px;
+    pointer-events: none;
+}
+
+.insurance-card-sea__lighthouse,
+.insurance-card-sea__anchor,
+.insurance-card-sea__wave {
+    color: rgba(var(--primary-color-rgb), 0.18);
+    line-height: 1;
+}
+
+.insurance-card-sea__lighthouse {
+    font-size: 3.2rem;
+}
+
+.insurance-card-sea__anchor {
+    font-size: 2.2rem;
+    transform: rotate(-10deg);
+}
+
+.insurance-card-sea__wave {
+    font-size: 2.6rem;
+}
+
+/* ─── Phone list ─── */
+
+.insurance-phones-list {
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.insurance-phone-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: rgba(var(--primary-color-rgb), 0.06);
+    color: #183f5f;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: background-color 0.22s ease, color 0.22s ease;
+    width: 100%;
+}
+
+.insurance-phone-link i {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.insurance-phone-link:hover {
+    background: rgba(var(--primary-color-rgb), 0.14);
+    color: var(--primary-color);
+}
+
+.insurance-phone-operator {
+    font-weight: 400;
+    font-size: 0.88rem;
+    color: #7a8fa0;
+    margin-left: 2px;
+}
+
+.insurance-online-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 20px;
+    border-radius: 50px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: var(--light-text);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    box-shadow: 0 3px 14px rgba(var(--primary-color-rgb), 0.28);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: fit-content;
+    margin-top: 4px;
+}
+
+.insurance-online-link:hover {
+    color: var(--light-text);
+    box-shadow: 0 6px 20px rgba(var(--primary-color-rgb), 0.38);
+    transform: translateY(-1px);
+}
+
+.insurance-online-link i {
+    font-size: 0.9rem;
+}
+
+.insurance-online-arrow {
+    margin-left: auto;
+    font-size: 0.8rem !important;
+    transition: transform 0.22s ease;
+}
+
+.insurance-online-link:hover .insurance-online-arrow {
+    transform: translateX(3px);
+}
+
+/* ─── Important note ─── */
+
+.insurance-register-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 22px 28px;
+    border-left: 4px solid var(--primary-color);
+    background: rgba(255, 255, 255, 0.98);
+}
+
+.insurance-register-note__icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff 0, rgba(232, 244, 253, 0.9) 40%, rgba(70, 130, 180, 0.15) 100%);
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.insurance-register-note__body {
+    flex: 1;
+    min-width: 0;
+    color: #4a5c6e;
+    line-height: 1.72;
+    font-size: 0.97rem;
+}
+
+.insurance-register-note__body strong {
+    color: #183f5f;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 1100px) {
+    .insurance-docs-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .insurance-sea-decor {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(6, minmax(96px, 1fr));
+        align-content: space-between;
+        padding: 26px clamp(12px, 4vw, 30px) 40px;
+    }
+
+    .insurance-sea {
+        position: relative;
+        top: auto;
+        right: auto;
+        bottom: auto;
+        left: auto;
+        display: block;
+    }
+
+    .insurance-sea--binoculars {
+        grid-row: 1;
+        grid-column: 1;
+        justify-self: start;
+        align-self: start;
+        font-size: clamp(34px, 6vw, 44px);
+    }
+
+    .insurance-sea--ship {
+        grid-row: 1;
+        grid-column: 2;
+        justify-self: end;
+        align-self: start;
+        font-size: clamp(38px, 7vw, 54px);
+    }
+
+    .insurance-sea--fish {
+        grid-row: 2;
+        grid-column: 1;
+        justify-self: center;
+        align-self: center;
+        font-size: clamp(40px, 7vw, 54px);
+    }
+
+    .insurance-sea--compass {
+        grid-row: 2;
+        grid-column: 2;
+        justify-self: end;
+        align-self: center;
+        font-size: clamp(46px, 8vw, 64px);
+    }
+
+    .insurance-sea--lifebuoy {
+        grid-row: 3;
+        grid-column: 1;
+        justify-self: start;
+        align-self: center;
+        font-size: clamp(42px, 7vw, 58px);
+    }
+
+    .insurance-sea--lighthouse {
+        grid-row: 4;
+        grid-column: 1;
+        justify-self: start;
+        align-self: center;
+        font-size: clamp(52px, 9vw, 72px);
+    }
+
+    .insurance-sea--anchor-mid {
+        grid-row: 3;
+        grid-column: 2;
+        justify-self: end;
+        align-self: center;
+        font-size: clamp(58px, 10vw, 84px);
+    }
+
+    .insurance-sea--wave-mid {
+        grid-row: 4;
+        grid-column: 2;
+        justify-self: center;
+        align-self: center;
+        font-size: clamp(60px, 10vw, 86px);
+    }
+
+    .insurance-sea--anchor-sm {
+        grid-row: 5;
+        grid-column: 1;
+        justify-self: start;
+        align-self: end;
+        font-size: clamp(48px, 9vw, 68px);
+    }
+
+    .insurance-sea--ship-low {
+        grid-row: 5;
+        grid-column: 2;
+        justify-self: end;
+        align-self: end;
+        font-size: clamp(40px, 7vw, 54px);
+    }
+
+    .insurance-sea--compass-low {
+        grid-row: 6;
+        grid-column: 1;
+        justify-self: center;
+        align-self: end;
+        font-size: clamp(44px, 8vw, 62px);
+    }
+
+    .insurance-sea--wave {
+        grid-row: 6;
+        grid-column: 2;
+        justify-self: end;
+        align-self: end;
+        font-size: clamp(62px, 11vw, 90px);
+    }
+
+    .insurance-intro-sea {
+        display: none;
+    }
+
+    .insurance-register-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .insurance-intro-section {
+        padding: 0 0 40px;
+    }
+
+    .insurance-docs-section,
+    .insurance-register-section {
+        padding-bottom: 44px;
+    }
+
+    .insurance-page-header h1 {
+        font-size: 1.9rem;
+    }
+
+    .insurance-page-header p {
+        font-size: 1rem;
+    }
+
+    .insurance-docs-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .insurance-partners-card {
+        padding: 20px;
+    }
+
+    .insurance-doc-card,
+    .insurance-register-card {
+        padding: 22px 20px;
+        border-radius: 12px;
+    }
+
+    .insurance-register-flow {
+        padding: 18px;
+    }
+
+    .insurance-register-flow__steps {
+        grid-template-columns: 1fr;
+    }
+
+    .insurance-register-flow__steps li {
+        padding: 12px 14px;
+    }
+
+    .insurance-register-note {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        padding: 18px 20px;
+    }
+
+    .insurance-register-note__icon {
+        margin-top: 0;
+    }
+
+    .insurance-register-note__body {
+        display: block;
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+    }
+
+    .insurance-sea-decor {
+        grid-template-rows: repeat(6, minmax(78px, 1fr));
+        padding: 18px clamp(10px, 4vw, 22px) 28px;
+    }
+
+    .insurance-sea--binoculars {
+        font-size: 30px;
+    }
+
+    .insurance-sea--ship {
+        font-size: 34px;
+    }
+
+    .insurance-sea--fish {
+        font-size: 36px;
+    }
+
+    .insurance-sea--compass {
+        font-size: 40px;
+    }
+
+    .insurance-sea--lifebuoy {
+        font-size: 38px;
+    }
+
+    .insurance-sea--lighthouse {
+        font-size: 48px;
+    }
+
+    .insurance-sea--anchor-mid {
+        font-size: 52px;
+    }
+
+    .insurance-sea--wave-mid {
+        font-size: 54px;
+    }
+
+    .insurance-sea--anchor-sm {
+        font-size: 44px;
+    }
+
+    .insurance-sea--ship-low {
+        font-size: 36px;
+    }
+
+    .insurance-sea--compass-low {
+        font-size: 38px;
+    }
+
+    .insurance-sea--wave {
+        font-size: 56px;
+    }
+
+    .insurance-partners-wrap {
+        margin-top: 36px;
+    }
+}
+
+@media (max-width: 480px) {
+    .insurance-intro-section {
+        padding: 0 0 32px;
+    }
+
+    .insurance-docs-section,
+    .insurance-register-section {
+        padding-bottom: 32px;
+    }
+
+    .insurance-page-header h1 {
+        font-size: 1.65rem;
+    }
+
+    .insurance-phone-link {
+        font-size: 0.95rem;
+    }
+
+    .insurance-register-card__head {
+        align-items: flex-start;
+    }
+
+    .insurance-register-card__icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+
+    .insurance-register-note {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .insurance-register-note__body {
+        display: block;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .insurance-register-flow__label {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .insurance-sea-decor {
+        padding: 14px 8px 22px;
+    }
+
+    .insurance-sea--binoculars {
+        font-size: 26px;
+    }
+
+    .insurance-sea--ship {
+        font-size: 28px;
+    }
+
+    .insurance-sea--fish {
+        font-size: 32px;
+    }
+
+    .insurance-sea--compass {
+        font-size: 36px;
+    }
+
+    .insurance-sea--lifebuoy {
+        font-size: 34px;
+    }
+
+    .insurance-sea--lighthouse {
+        font-size: 42px;
+    }
+
+    .insurance-sea--anchor-mid {
+        font-size: 46px;
+    }
+
+    .insurance-sea--wave-mid {
+        font-size: 48px;
+    }
+
+    .insurance-sea--anchor-sm {
+        font-size: 38px;
+    }
+
+    .insurance-sea--ship-low {
+        font-size: 32px;
+    }
+
+    .insurance-sea--compass-low {
+        font-size: 34px;
+    }
+
+    .insurance-sea--wave {
+        font-size: 46px;
+    }
+
+    .insurance-card-sea__lighthouse {
+        font-size: 2.4rem;
+    }
+
+    .insurance-card-sea__anchor {
+        font-size: 1.7rem;
+    }
+
+    .insurance-card-sea__wave {
+        font-size: 2rem;
+    }
+}

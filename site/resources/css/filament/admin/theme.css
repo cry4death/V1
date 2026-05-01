@@ -1,0 +1,612 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+@layer components {
+    .fi-body {
+        @apply bg-[#f8f9fa] dark:bg-gray-950;
+    }
+
+    .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+        @apply bg-primary-50 dark:bg-primary-400/10;
+    }
+
+    .fi-topbar {
+        @apply shadow-[0_2px_8px_rgba(0,0,0,0.06)] ring-[#e1e5ea]/60 dark:ring-white/10;
+    }
+
+    .fi-section:not(.fi-section-not-contained) > .fi-section-content-ctn {
+        @apply rounded-[8px] shadow-[0_4px_12px_rgba(0,0,0,0.06)] ring-1 ring-[#e1e5ea]/70 dark:ring-white/10;
+    }
+
+    .fi-fo-file-upload .filepond--root {
+        @apply rounded-[8px];
+    }
+
+    /* FileUpload (FilePond): курсор на кнопках и ссылках действий (удалить, скачать, открыть) */
+    .fi-fo-file-upload .filepond--file-action-button,
+    .fi-fo-file-upload button[class*='filepond--action-'],
+    .fi-fo-file-upload a[class*='filepond--action-'],
+    .fi-fo-file-upload a.filepond--download-icon,
+    .fi-fo-file-upload a.filepond--open-icon {
+        cursor: pointer;
+    }
+
+    /* Липкий тулбар: ниже панели DateTimePicker (z-10), иначе календарь уходит под тулбар */
+    .fi-fo-rich-editor .fi-fo-rich-editor-toolbar,
+    .fi-fo-rich-editor [role="toolbar"] {
+        position: sticky;
+        top: 4rem;
+        z-index: 8;
+        background: var(--fi-color-gray-50, #f8f9fa);
+        backdrop-filter: blur(6px);
+    }
+
+    .dark .fi-fo-rich-editor .fi-fo-rich-editor-toolbar,
+    .dark .fi-fo-rich-editor [role="toolbar"] {
+        background: rgba(17, 24, 39, 0.85);
+    }
+
+    /* Панель календаря чуть выше тулбара и липких элементов внутри поля */
+    .fi-fo-date-time-picker .fi-fo-date-time-picker-panel {
+        z-index: 15;
+    }
+
+    /* List markers — fa-chevron-right in editor and prose */
+    .fi-fo-rich-editor .ProseMirror ul,
+    .fi-prose ul,
+    .fi-prose-content ul {
+        list-style: none !important;
+        padding-left: 1.5rem !important;
+    }
+
+    .fi-fo-rich-editor .ProseMirror ul > li,
+    .fi-prose ul > li,
+    .fi-prose-content ul > li {
+        position: relative;
+        padding-left: 0.25rem;
+        list-style: none !important;
+    }
+
+    .fi-fo-rich-editor .ProseMirror ul > li::marker,
+    .fi-prose ul > li::marker,
+    .fi-prose-content ul > li::marker {
+        content: '' !important;
+    }
+
+    .fi-fo-rich-editor .ProseMirror ul > li::before,
+    .fi-prose ul > li::before,
+    .fi-prose-content ul > li::before {
+        content: '\f054';
+        font-family: 'Font Awesome 6 Free', 'FontAwesome', sans-serif;
+        font-weight: 900;
+        position: absolute;
+        left: -1.25rem;
+        top: 0.25em;
+        font-size: 0.75em;
+        color: #4682b4;
+    }
+
+    /* === ?????? ? ????? ????? === */
+    .fi-btn {
+        border-radius: 50px !important;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        min-width: 140px;
+        justify-content: center;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ?????-?????? ? ?????????? ?????? ? ??? ???????? */
+    .fi-icon-btn,
+    .fi-btn.fi-btn-size-xs,
+    .fi-btn-group .fi-btn,
+    .fi-ta-actions .fi-btn,
+    .fi-ta-row .fi-btn,
+    .fi-pagination .fi-btn,
+    .fi-dropdown .fi-btn,
+    .fi-tabs .fi-btn {
+        min-width: 0;
+    }
+
+    /* ???????? ?????? (primary) ? ???????? ??? ?? ????? */
+    .fi-btn.fi-color-primary,
+    .fi-btn-color-primary,
+    .fi-btn[data-color="primary"],
+    .fi-ac-btn-action.fi-color-primary {
+        background: linear-gradient(135deg, #4682b4 0%, #1e5a99 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 3px 14px rgba(70, 130, 180, 0.32) !important;
+    }
+
+    .fi-btn.fi-color-primary:hover,
+    .fi-btn-color-primary:hover,
+    .fi-btn[data-color="primary"]:hover,
+    .fi-ac-btn-action.fi-color-primary:hover {
+        background: linear-gradient(135deg, #4682b4 0%, #1e5a99 100%) !important;
+        box-shadow: 0 8px 28px rgba(70, 130, 180, 0.42) !important;
+        transform: translateY(-2px);
+    }
+
+    .fi-btn.fi-color-primary:active,
+    .fi-btn-color-primary:active,
+    .fi-btn[data-color="primary"]:active {
+        transform: translateY(0);
+        box-shadow: 0 3px 10px rgba(70, 130, 180, 0.32) !important;
+    }
+
+    .fi-btn.fi-color-primary *,
+    .fi-btn-color-primary *,
+    .fi-btn[data-color="primary"] * {
+        color: #ffffff !important;
+    }
+
+    /* ?????? ???????? / ??????? ???????? ? ??????? ??? ?? ????? */
+    .fi-btn.fi-color-danger,
+    .fi-btn-color-danger,
+    .fi-btn[data-color="danger"],
+    .fi-ac-btn-action.fi-color-danger {
+        background: #dc2626 !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 3px 14px rgba(220, 38, 38, 0.28) !important;
+    }
+
+    .fi-btn.fi-color-danger:hover,
+    .fi-btn-color-danger:hover,
+    .fi-btn[data-color="danger"]:hover,
+    .fi-ac-btn-action.fi-color-danger:hover {
+        background: #b91c1c !important;
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4) !important;
+        transform: translateY(-1px);
+    }
+
+    .fi-btn.fi-color-danger *,
+    .fi-btn-color-danger *,
+    .fi-btn[data-color="danger"] * {
+        color: #ffffff !important;
+    }
+
+    /* ?????? secondary / gray (??????) ? ??????????? ??????? ? ????? ??????? ??? hover */
+    .fi-modal-footer .fi-btn[data-color="gray"],
+    .fi-modal-footer .fi-btn.fi-color-gray {
+        border-radius: 50px !important;
+    }
+
+    /* === ????????? ?????: ?????? ????? ??? ??????????? === */
+    .fi-fo-repeater .fi-fo-repeater-item {
+        padding: 1.25rem 1.5rem;
+    }
+
+    .fi-fo-repeater .fi-fo-repeater-item .fi-fo-component-ctn {
+        margin-bottom: 0.75rem;
+    }
+
+    .fi-fo-repeater textarea,
+    .fi-section .fi-fo-repeater textarea {
+        min-height: 8rem;
+    }
+
+    /* ?????? ??????????? (Direction): ???? ?????? ???????????? ??????? */
+    .fi-section .fi-section-content {
+        padding: 1.5rem 1.75rem;
+    }
+
+    /* === ??????????? ? RichEditor (Trix) === */
+    trix-editor img,
+    trix-editor .attachment img,
+    .fi-fo-rich-editor .ProseMirror img {
+        cursor: pointer;
+        transition: outline 0.15s ease, transform 0.15s ease;
+    }
+
+    trix-editor img:hover,
+    trix-editor .attachment img:hover,
+    .fi-fo-rich-editor .ProseMirror img:hover {
+        outline: 2px dashed rgba(70, 130, 180, 0.6);
+        outline-offset: 2px;
+    }
+
+    trix-editor .attachment.attachment--selected img,
+    trix-editor .attachment[data-trix-selected] img,
+    .fi-fo-rich-editor .ProseMirror img.ProseMirror-selectednode,
+    .fi-fo-rich-editor .ProseMirror .ProseMirror-selectednode img,
+    .fi-fo-rich-editor .ProseMirror [data-type="image"].ProseMirror-selectednode img,
+    .fi-fo-rich-editor .ProseMirror img.is-selected,
+    .fi-fo-rich-editor .ProseMirror img.has-focus {
+        outline: 3px solid #4682b4 !important;
+        outline-offset: 3px !important;
+        border-radius: 4px;
+        box-shadow: 0 0 0 6px rgba(70, 130, 180, 0.18) !important;
+    }
+
+    /* Image alignment in admin RichEditor (Filament оперирует text-align: start/center/end/justify) */
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: center"],
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: right"],
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: end"],
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: left"],
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: start"] {
+        display: block;
+    }
+
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: center"] [data-resize-container],
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: center"] img {
+        display: inline-block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: right"] [data-resize-container],
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: right"] img:not([data-resize-container] img),
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: end"] [data-resize-container],
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: end"] img:not([data-resize-container] img) {
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        float: none !important;
+    }
+
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: left"] [data-resize-container],
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: left"] img:not([data-resize-container] img),
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: start"] [data-resize-container],
+    .fi-fo-rich-editor .ProseMirror [style*="text-align: start"] img:not([data-resize-container] img) {
+        display: block !important;
+        margin-left: 0 !important;
+        margin-right: auto !important;
+        float: none !important;
+    }
+
+    /* Trix legacy selectors */
+    trix-editor [style*="text-align: center"] img,
+    trix-editor [style*="text-align: center"] .attachment {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    trix-editor [style*="text-align: right"] img,
+    trix-editor [style*="text-align: right"] .attachment {
+        display: block;
+        margin-left: auto;
+        margin-right: 0;
+    }
+    trix-editor [style*="text-align: left"] img,
+    trix-editor [style*="text-align: left"] .attachment {
+        display: block;
+        margin-left: 0;
+        margin-right: auto;
+    }
+
+}
+
+/* === Word-style инлайн-панели для RichEditor === */
+.zm-rte-panel {
+    position: fixed;
+    z-index: 2147483646;
+    background: #fff;
+    border: 1px solid rgba(70, 130, 180, 0.28);
+    border-radius: 12px;
+    padding: 10px 10px 8px;
+    box-shadow: 0 18px 40px rgba(20, 40, 80, 0.22);
+    min-width: 248px;
+    max-height: calc(100vh - 16px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+.dark .zm-rte-panel {
+    background: #1f2937;
+    border-color: rgba(148, 197, 233, 0.25);
+    color: #e5e7eb;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+.zm-rte-panel .zm-rte-heading {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #4682b4;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 2px 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(70, 130, 180, 0.18);
+}
+.dark .zm-rte-panel .zm-rte-heading {
+    color: #93c5fd;
+    border-bottom-color: rgba(148, 197, 233, 0.2);
+}
+.zm-rte-panel .zm-rte-color-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 24px);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.zm-rte-panel .zm-rte-color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+.zm-rte-panel .zm-rte-color-swatch:hover {
+    transform: scale(1.18);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.zm-rte-panel .zm-rte-color-swatch.is-active {
+    outline: 2px solid #4682b4;
+    outline-offset: 2px;
+}
+.zm-rte-panel .zm-rte-custom-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 4px 8px;
+    font-size: 0.85rem;
+    color: #183554;
+}
+.dark .zm-rte-panel .zm-rte-custom-row {
+    color: #cbd5e1;
+}
+.zm-rte-panel .zm-rte-custom-row__label {
+    font-weight: 600;
+}
+.zm-rte-panel .zm-rte-custom-row__hint {
+    font-size: 0.72rem;
+    color: #6b7280;
+}
+.dark .zm-rte-panel .zm-rte-custom-row__hint {
+    color: #9ca3af;
+}
+/* Панели «цвет текста» / «цвет выделения» — чёрный текст (ниже общих правил, чтобы не перебивались). */
+.zm-rte-panel.zm-rte-panel--color-tools .zm-rte-custom-row,
+.zm-rte-panel.zm-rte-panel--color-tools .zm-rte-custom-row__label,
+.zm-rte-panel.zm-rte-panel--color-tools .zm-rte-custom-row__hint,
+.zm-rte-panel.zm-rte-panel--color-tools .zm-rte-reset {
+    color: #000000;
+}
+.dark .zm-rte-panel.zm-rte-panel--color-tools .zm-rte-custom-row,
+.dark .zm-rte-panel.zm-rte-panel--color-tools .zm-rte-custom-row__label,
+.dark .zm-rte-panel.zm-rte-panel--color-tools .zm-rte-custom-row__hint,
+.dark .zm-rte-panel.zm-rte-panel--color-tools .zm-rte-reset {
+    color: #f9fafb;
+}
+.zm-rte-panel .zm-rte-custom-row input[type="color"] {
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(70, 130, 180, 0.35);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 0;
+    background: transparent;
+}
+.zm-rte-panel .zm-rte-reset,
+.zm-rte-panel .zm-rte-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #183554;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+.dark .zm-rte-panel .zm-rte-reset,
+.dark .zm-rte-panel .zm-rte-menu-item {
+    color: #e5e7eb;
+}
+.zm-rte-panel .zm-rte-reset:hover,
+.zm-rte-panel .zm-rte-menu-item:hover {
+    background: rgba(70, 130, 180, 0.12);
+}
+/* Выбранный пункт меню: тот же фон, что при наведении (не «сбрасывается» после клика). */
+.zm-rte-panel .zm-rte-menu-item.is-active {
+    background: rgba(70, 130, 180, 0.12);
+    font-weight: 600;
+}
+.zm-rte-panel--spacing-menu .zm-rte-menu-item {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: #000000;
+}
+.dark .zm-rte-panel--spacing-menu .zm-rte-menu-item {
+    color: #f9fafb;
+}
+.zm-rte-panel--spacing-menu .zm-rte-menu-item.is-active {
+    color: #000000;
+}
+.dark .zm-rte-panel--spacing-menu .zm-rte-menu-item.is-active {
+    color: #f9fafb;
+}
+.zm-rte-panel--menu {
+    min-width: 120px;
+    max-width: min(100vw - 16px, 220px);
+}
+
+.zm-rte-panel.zm-rte-panel--quote-form {
+    min-width: 280px;
+    max-width: min(100vw - 24px, 380px);
+    padding-bottom: 12px;
+}
+
+.zm-rte-panel--quote-form .zm-rte-quote-hint {
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #64748b;
+    margin: 0 0 10px;
+}
+
+.dark .zm-rte-panel--quote-form .zm-rte-quote-hint {
+    color: #94a3b8;
+}
+
+.zm-rte-panel--quote-form .zm-rte-quote-text {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    font: inherit;
+    resize: vertical;
+    min-height: 88px;
+}
+
+.dark .zm-rte-panel--quote-form .zm-rte-quote-text {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(15, 23, 42, 0.35);
+    color: #f1f5f9;
+}
+
+.zm-rte-panel--quote-form .zm-rte-quote-field {
+    margin-bottom: 12px;
+}
+
+.zm-rte-panel--quote-form .zm-rte-quote-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+}
+
+.dark .zm-rte-panel--quote-form .zm-rte-quote-label {
+    color: #cbd5e1;
+}
+
+.zm-rte-panel--quote-form .zm-rte-quote-author {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    font: inherit;
+}
+
+.dark .zm-rte-panel--quote-form .zm-rte-quote-author {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(15, 23, 42, 0.35);
+    color: #f1f5f9;
+}
+
+.zm-rte-panel--quote-form .zm-rte-quote-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.zm-rte-panel--quote-form .zm-rte-quote-submit {
+    flex: 1 1 auto;
+    min-width: 140px;
+}
+
+/* Окно «Цитата» — те же отступы и размеры шрифта, что у остальных zm-rte-панелей */
+.zm-rte-panel--blockquote-modal .zm-rte-bq-author-field {
+    margin-bottom: 10px;
+}
+
+.zm-rte-panel--blockquote-modal .zm-rte-bq-author-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #183554;
+    margin-bottom: 4px;
+}
+
+.dark .zm-rte-panel--blockquote-modal .zm-rte-bq-author-label {
+    color: #cbd5e1;
+}
+
+.zm-rte-panel--blockquote-modal .zm-rte-bq-author-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(70, 130, 180, 0.35);
+    background: #fff;
+    font: inherit;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: #183554;
+    outline: none;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.zm-rte-panel--blockquote-modal .zm-rte-bq-author-input::placeholder {
+    color: #6b7280;
+}
+
+.zm-rte-panel--blockquote-modal .zm-rte-bq-author-input:hover {
+    border-color: rgba(70, 130, 180, 0.55);
+}
+
+.zm-rte-panel--blockquote-modal .zm-rte-bq-author-input:focus {
+    border-color: #4682b4;
+    box-shadow: 0 0 0 2px rgba(70, 130, 180, 0.2);
+}
+
+.dark .zm-rte-panel--blockquote-modal .zm-rte-bq-author-input {
+    border-color: rgba(148, 197, 233, 0.35);
+    background: rgba(15, 23, 42, 0.45);
+    color: #e5e7eb;
+}
+
+.dark .zm-rte-panel--blockquote-modal .zm-rte-bq-author-input::placeholder {
+    color: #9ca3af;
+}
+
+.dark .zm-rte-panel--blockquote-modal .zm-rte-bq-author-input:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.2);
+}
+
+.zm-rte-panel--blockquote-modal .zm-rte-bq-author-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.zm-rte-panel--blockquote-modal .zm-rte-bq-author-submit {
+    flex: 1 1 auto;
+    min-width: 140px;
+}
+
+/* Текст с цветом из TextColor — Filament's `.color` уже стилизован, но в ProseMirror
+   на всякий случай дублируем правило (для офлайн-просмотра редактора и для фронта). */
+.fi-fo-rich-editor .ProseMirror span.color[data-color],
+.fi-prose span.color[data-color],
+.bp-article span.color[data-color],
+#promo-content span.color[data-color] {
+    color: var(--color, inherit);
+}
+/* mark[data-color] всегда получает цвет фона из inline-style, заданного tiptap-php
+   Highlight (background-color: <color>). Этот блок — небольшое типографское оформление. */
+.fi-fo-rich-editor .ProseMirror mark[data-color],
+.fi-prose mark[data-color],
+.bp-article mark[data-color],
+#promo-content mark[data-color] {
+    color: inherit;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* Stats overview - uniform blue accents matching the site palette */
+.fi-wi-stats-overview-stat-description,
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description {
+    color: #4682b4 !important;
+}
+.fi-wi-stats-overview-stat-description-icon,
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description-icon {
+    color: #4682b4 !important;
+}
+.fi-wi-stats-overview-stat-value {
+    color: #111827 !important;
+}

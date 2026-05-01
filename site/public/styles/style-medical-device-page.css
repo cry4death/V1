@@ -1,0 +1,793 @@
+.medical-device-detail-page {
+    background-color: var(--accent-color);
+}
+
+.medical-device-detail-page footer {
+    padding-top: 80px;
+}
+
+.medical-device-page {
+    min-height: 0;
+    position: relative;
+    isolation: isolate;
+    overflow-x: clip;
+    padding: 0;
+    background: var(--accent-color);
+}
+
+@supports not (overflow: clip) {
+    .medical-device-page {
+        overflow-x: hidden;
+    }
+}
+
+.medical-device-page > :not(.device-page-sea-decor) {
+    position: relative;
+    z-index: 1;
+}
+
+.device-page-sea-decor {
+    position: absolute;
+    inset: 0;
+    display: none !important;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.device-page-sea-decor i {
+    position: absolute;
+    line-height: 1;
+    color: rgba(var(--primary-color-rgb), 0.058);
+}
+
+.dpsd--lighthouse-upper-left {
+    font-size: 96px;
+    top: 4%;
+    left: 4%;
+    transform: rotate(-5deg);
+    color: rgba(var(--primary-color-rgb), 0.068);
+}
+
+.dpsd--compass-upper-right {
+    font-size: 54px;
+    top: 10%;
+    right: 7%;
+    transform: rotate(8deg);
+}
+
+.dpsd--ship-upper-mid {
+    font-size: 48px;
+    top: 19%;
+    left: 68%;
+    transform: rotate(-7deg);
+}
+
+.dpsd--anchor-left-mid {
+    font-size: 58px;
+    top: 31%;
+    left: 7%;
+    transform: rotate(10deg);
+    color: rgba(var(--primary-color-rgb), 0.054);
+}
+
+.dpsd--wave-left-lower {
+    font-size: 72px;
+    top: 48%;
+    left: 2%;
+    transform: rotate(-5deg);
+    color: rgba(var(--primary-color-rgb), 0.048);
+}
+
+.dpsd--fish-center {
+    font-size: 38px;
+    top: 54%;
+    left: 44%;
+    transform: scaleX(-1) rotate(-8deg);
+}
+
+.dpsd--lifebuoy-right-mid {
+    font-size: 46px;
+    top: 41%;
+    right: 9%;
+    transform: rotate(9deg);
+}
+
+.dpsd--binoculars-lower-left {
+    font-size: 38px;
+    top: 76%;
+    left: 14%;
+    transform: rotate(-8deg);
+}
+
+.dpsd--wheel-lower-mid {
+    font-size: 46px;
+    top: 83%;
+    left: 55%;
+    transform: rotate(-10deg);
+}
+
+.dpsd--ship-bottom-left {
+    font-size: 42px;
+    top: 91%;
+    left: 5%;
+    transform: rotate(6deg);
+}
+
+.dpsd--compass-bottom-center {
+    font-size: 40px;
+    top: 92%;
+    left: 48%;
+    transform: translateX(-50%) rotate(-8deg);
+}
+
+.dpsd--anchor-lower-right {
+    font-size: 60px;
+    top: 71%;
+    right: 10%;
+    transform: rotate(12deg);
+    color: rgba(var(--primary-color-rgb), 0.055);
+}
+
+.dpsd--wave-bottom-right {
+    font-size: 74px;
+    top: 90%;
+    right: 3%;
+    transform: rotate(-4deg);
+    color: rgba(var(--primary-color-rgb), 0.048);
+}
+
+.device-hero {
+    position: relative;
+    overflow: visible;
+    margin-bottom: 0;
+    padding: 24px 0 0;
+    background: transparent;
+    border-bottom: none;
+}
+
+.device-hero::after {
+    display: none;
+}
+
+.device-hero-decor {
+    position: absolute;
+    inset: 0;
+    display: none !important;
+    pointer-events: none;
+    z-index: 0;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(72px, 1fr));
+    align-content: space-between;
+    padding: 14px 18px 18px;
+}
+
+.device-hero-decor i {
+    position: relative;
+    display: block;
+    line-height: 1;
+    color: rgba(var(--primary-color-rgb), 0.115);
+}
+
+.dhd--compass-left {
+    grid-row: 1;
+    grid-column: 1;
+    justify-self: start;
+    align-self: start;
+    font-size: 42px;
+    transform: rotate(-11deg);
+}
+
+.dhd--anchor-top {
+    grid-row: 2;
+    grid-column: 2;
+    justify-self: center;
+    align-self: end;
+    font-size: 44px;
+    transform: rotate(-8deg);
+}
+
+.dhd--ship-right {
+    grid-row: 1;
+    grid-column: 3;
+    justify-self: center;
+    align-self: center;
+    font-size: 38px;
+    transform: rotate(-6deg);
+}
+
+.dhd--wave-bottom-right {
+    grid-row: 2;
+    grid-column: 4;
+    justify-self: center;
+    align-self: end;
+    font-size: 52px;
+    transform: rotate(-3deg);
+}
+
+.dhd--lighthouse-right {
+    grid-row: 1;
+    grid-column: 5;
+    justify-self: end;
+    align-self: start;
+    font-size: 60px;
+    transform: rotate(5deg);
+}
+
+.device-hero .container {
+    position: relative;
+    z-index: 1;
+}
+
+.device-hero-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    height: 246px;
+    padding: 2.5rem;
+    border-radius: 12px;
+    background: var(--light-text);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.device-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: fit-content;
+    padding: 0.2rem 0.7rem;
+    margin-bottom: 1rem;
+    background: rgba(var(--primary-color-rgb), 0.08);
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.device-kicker i {
+    margin: 0;
+    font-size: 0.75rem;
+}
+
+.device-title {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    font-size: clamp(1.75rem, 3.2vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--dark-text);
+}
+
+.device-overview-section {
+    padding: 1.5rem 0 4rem;
+    background-color: transparent;
+}
+
+.device-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+    gap: 30px;
+    align-items: stretch;
+}
+
+.device-image-panel,
+.device-content-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 28px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(var(--primary-color-rgb), 0.12);
+    box-shadow: 0 18px 38px rgba(16, 52, 92, 0.08);
+    backdrop-filter: blur(6px);
+}
+
+.device-image-panel {
+    border-radius: 16px;
+}
+
+.device-image-shell {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    min-height: 420px;
+    padding: 30px;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 50% 24%, rgba(255, 255, 255, 0.98) 0%, rgba(235, 245, 251, 0.94) 56%, rgba(var(--primary-color-rgb), 0.14) 100%);
+    border: 1px solid rgba(var(--primary-color-rgb), 0.10);
+    overflow: hidden;
+}
+
+.device-image-shell::before {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.92);
+}
+
+.device-image-shell img {
+    position: relative;
+    z-index: 1;
+    max-width: 100%;
+    max-height: 480px;
+    object-fit: contain;
+    filter: drop-shadow(0 22px 34px rgba(17, 44, 69, 0.14));
+}
+
+.device-content-panel {
+    justify-content: flex-start;
+    padding: 32px 40px;
+    border-radius: 16px;
+}
+
+.device-content-panel h2 {
+    width: 100%;
+    max-width: none;
+    margin: 0 0 18px;
+    font-size: 2rem;
+    line-height: 1.15;
+    color: #16324d;
+}
+
+.device-content-panel p {
+    margin: 0 0 1rem;
+    color: #516173;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.device-content-panel p:last-child {
+    margin-bottom: 0;
+}
+
+.medical-device-page .animate-on-scroll {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.medical-device-page .animate-on-scroll.visible {
+    opacity: 1;
+    transform: none;
+}
+
+@media (max-width: 1024px) {
+    .device-overview {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 992px) {
+    .device-page-sea-decor {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: repeat(5, minmax(82px, 1fr));
+        align-content: space-between;
+        padding: 24px clamp(12px, 4vw, 28px) 36px;
+    }
+
+    .device-page-sea-decor i {
+        position: relative;
+        top: auto;
+        right: auto;
+        bottom: auto;
+        left: auto;
+        display: block;
+    }
+
+    .dpsd--lighthouse-upper-left {
+        grid-row: 1;
+        grid-column: 1;
+        justify-self: start;
+        align-self: start;
+        font-size: clamp(44px, 8vw, 56px);
+    }
+
+    .dpsd--compass-upper-right {
+        grid-row: 1;
+        grid-column: 2;
+        justify-self: center;
+        align-self: start;
+        font-size: clamp(32px, 6vw, 44px);
+    }
+
+    .dpsd--ship-upper-mid {
+        grid-row: 1;
+        grid-column: 3;
+        justify-self: end;
+        align-self: start;
+        font-size: clamp(30px, 6vw, 42px);
+    }
+
+    .dpsd--anchor-left-mid {
+        grid-row: 2;
+        grid-column: 1;
+        justify-self: start;
+        align-self: center;
+        font-size: clamp(36px, 7vw, 48px);
+    }
+
+    .dpsd--fish-center {
+        grid-row: 2;
+        grid-column: 2;
+        justify-self: center;
+        align-self: center;
+        font-size: clamp(24px, 5vw, 32px);
+    }
+
+    .dpsd--lifebuoy-right-mid {
+        grid-row: 2;
+        grid-column: 3;
+        justify-self: end;
+        align-self: center;
+        font-size: clamp(30px, 6vw, 42px);
+    }
+
+    .dpsd--wave-left-lower {
+        grid-row: 3;
+        grid-column: 1;
+        justify-self: start;
+        align-self: center;
+        font-size: clamp(40px, 8vw, 54px);
+    }
+
+    .dpsd--binoculars-lower-left {
+        grid-row: 3;
+        grid-column: 2;
+        justify-self: center;
+        align-self: center;
+        font-size: clamp(22px, 5vw, 30px);
+    }
+
+    .dpsd--anchor-lower-right {
+        grid-row: 3;
+        grid-column: 3;
+        justify-self: end;
+        align-self: center;
+        font-size: clamp(36px, 7vw, 48px);
+    }
+
+    .dpsd--wheel-lower-mid {
+        grid-row: 4;
+        grid-column: 1;
+        justify-self: start;
+        align-self: end;
+        font-size: clamp(28px, 6vw, 40px);
+    }
+
+    .dpsd--ship-bottom-left {
+        grid-row: 5;
+        grid-column: 1;
+        justify-self: start;
+        align-self: end;
+        font-size: clamp(24px, 5vw, 34px);
+    }
+
+    .dpsd--compass-bottom-center {
+        grid-row: 5;
+        grid-column: 2;
+        justify-self: center;
+        align-self: end;
+        font-size: clamp(28px, 6vw, 38px);
+    }
+
+    .dpsd--wave-bottom-right {
+        grid-row: 5;
+        grid-column: 3;
+        justify-self: end;
+        align-self: end;
+        font-size: clamp(42px, 9vw, 56px);
+    }
+
+    .device-hero {
+        padding: 20px 0 0;
+    }
+
+    .device-hero-decor {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(64px, 1fr));
+        padding: 12px 12px 18px;
+    }
+
+    .device-hero-decor i {
+        transform: none;
+    }
+
+    .dhd--compass-left {
+        font-size: clamp(30px, 6vw, 40px);
+    }
+
+    .dhd--anchor-top {
+        grid-row: 2;
+        grid-column: 2;
+        justify-self: center;
+        align-self: end;
+        font-size: clamp(32px, 6vw, 40px);
+    }
+
+    .dhd--lighthouse-right {
+        grid-row: 1;
+        grid-column: 5;
+        justify-self: end;
+        align-self: start;
+        font-size: clamp(38px, 7vw, 48px);
+    }
+
+    .dhd--ship-right {
+        grid-row: 1;
+        grid-column: 3;
+        justify-self: center;
+        align-self: center;
+        font-size: clamp(24px, 5vw, 34px);
+    }
+
+    .dhd--wave-bottom-right {
+        grid-row: 2;
+        grid-column: 4;
+        justify-self: center;
+        align-self: end;
+        font-size: clamp(32px, 7vw, 42px);
+    }
+}
+
+@media (max-width: 768px) {
+    .medical-device-page {
+        padding: 0;
+    }
+
+    .device-page-sea-decor {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(6, minmax(62px, 1fr));
+        padding: 18px clamp(10px, 4vw, 22px) 28px;
+    }
+
+    .dpsd--lighthouse-upper-left {
+        grid-row: 1;
+        grid-column: 1;
+        font-size: 40px;
+    }
+
+    .dpsd--compass-upper-right {
+        grid-row: 1;
+        grid-column: 2;
+        justify-self: end;
+    }
+
+    .dpsd--ship-upper-mid {
+        grid-row: 2;
+        grid-column: 1;
+        justify-self: start;
+    }
+
+    .dpsd--anchor-left-mid {
+        grid-row: 2;
+        grid-column: 2;
+        justify-self: end;
+    }
+
+    .dpsd--wave-left-lower {
+        grid-row: 3;
+        grid-column: 1;
+        justify-self: start;
+    }
+
+    .dpsd--lifebuoy-right-mid {
+        grid-row: 3;
+        grid-column: 2;
+        justify-self: end;
+    }
+
+    .dpsd--wheel-lower-mid {
+        grid-row: 4;
+        grid-column: 1;
+        justify-self: start;
+    }
+
+    .dpsd--anchor-lower-right {
+        grid-row: 4;
+        grid-column: 2;
+        justify-self: end;
+    }
+
+    .dpsd--wave-bottom-right {
+        grid-row: 5;
+        grid-column: 2;
+        justify-self: end;
+    }
+
+    .dpsd--ship-bottom-left {
+        grid-row: 5;
+        grid-column: 1;
+        justify-self: start;
+    }
+
+    .dpsd--compass-bottom-center {
+        grid-row: 6;
+        grid-column: 1 / span 2;
+        justify-self: center;
+    }
+
+    .dpsd--fish-center,
+    .dpsd--binoculars-lower-left {
+        display: none;
+    }
+
+    .device-hero {
+        margin-bottom: 0;
+        padding: 18px 0 0;
+    }
+
+    .device-hero-content {
+        height: auto;
+        padding: 2rem 1.5rem;
+        border-radius: 10px;
+        min-height: 200px;
+    }
+
+    .device-hero-decor {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(54px, 1fr));
+        row-gap: 8px;
+        padding: 12px 10px 18px;
+    }
+
+    .dhd--compass-left {
+        grid-row: 1;
+        grid-column: 1;
+        justify-self: start;
+        font-size: 28px;
+    }
+
+    .dhd--anchor-top {
+        grid-row: 1;
+        grid-column: 2;
+        justify-self: center;
+        align-self: start;
+        font-size: 28px;
+    }
+
+    .dhd--lighthouse-right {
+        grid-row: 1;
+        grid-column: 3;
+        justify-self: end;
+        font-size: 34px;
+    }
+
+    .dhd--ship-right {
+        grid-row: 2;
+        grid-column: 1;
+        justify-self: start;
+        align-self: end;
+        font-size: 24px;
+    }
+
+    .dhd--wave-bottom-right {
+        grid-row: 2;
+        grid-column: 3;
+        justify-self: end;
+        align-self: end;
+        font-size: 32px;
+    }
+
+    .dhd--wheel-top-right,
+    .dhd--fish-left,
+    .dhd--lifebuoy-bottom-left,
+    .dhd--binoculars-bottom {
+        display: none;
+    }
+
+    .device-title {
+        font-size: clamp(1.6rem, 7vw, 2.1rem);
+    }
+
+    .device-overview-section {
+        padding: 1.25rem 0 3rem;
+    }
+
+    .device-image-panel,
+    .device-content-panel {
+        padding: 20px;
+    }
+
+    .device-image-shell {
+        min-height: 360px;
+        padding: 22px;
+    }
+
+    .device-content-panel {
+        padding: 26px 22px;
+    }
+}
+
+@media (max-width: 520px) {
+    .device-page-sea-decor {
+        grid-template-rows: repeat(6, minmax(56px, 1fr));
+    }
+
+    .dpsd--ship-upper-mid,
+    .dpsd--wheel-lower-mid {
+        display: none;
+    }
+
+    .dpsd--ship-bottom-left,
+    .dpsd--compass-bottom-center {
+        display: block;
+    }
+
+    .device-hero {
+        padding: 14px 0 0;
+    }
+
+    .device-hero-content {
+        height: auto;
+        padding: 1.5rem 1.25rem;
+        border-radius: 8px;
+        min-height: 176px;
+    }
+
+    .device-hero-decor {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(48px, 1fr));
+        row-gap: 8px;
+        padding: 10px 6px 16px;
+    }
+
+    .dhd--compass-left {
+        grid-row: 1;
+        grid-column: 1;
+        justify-self: start;
+        font-size: 28px;
+    }
+
+    .dhd--anchor-top {
+        grid-row: 1;
+        grid-column: 2;
+        justify-self: center;
+        align-self: start;
+        font-size: 24px;
+    }
+
+    .dhd--lighthouse-right {
+        grid-row: 1;
+        grid-column: 3;
+        justify-self: end;
+        font-size: 30px;
+    }
+
+    .dhd--ship-right {
+        grid-row: 2;
+        grid-column: 1;
+        justify-self: start;
+        font-size: 20px;
+    }
+
+    .dhd--wave-bottom-right {
+        grid-row: 2;
+        grid-column: 3;
+        justify-self: end;
+        font-size: 28px;
+    }
+
+    .device-image-shell {
+        min-height: 300px;
+    }
+
+    .device-overview-section {
+        padding: 1rem 0 2rem;
+    }
+}

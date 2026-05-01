@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Filament\Resources\Equipment;
+
+use App\Filament\Resources\Equipment\Pages\CreateEquipment;
+use App\Filament\Resources\Equipment\Pages\EditEquipment;
+use App\Filament\Resources\Equipment\Pages\ListEquipment;
+use App\Filament\Resources\Equipment\Schemas\EquipmentForm;
+use App\Filament\Resources\Equipment\Tables\EquipmentTable;
+use App\Models\Equipment as EquipmentModel;
+use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
+
+class EquipmentResource extends Resource
+{
+    protected static ?string $model = EquipmentModel::class;
+
+    protected static ?string $navigationLabel = 'Оборудование';
+
+    protected static ?string $modelLabel = 'Оборудование';
+
+    protected static ?string $pluralModelLabel = 'Оборудование';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Клиника';
+
+    protected static ?int $navigationSort = 25;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCpuChip;
+
+    public static function form(Schema $schema): Schema
+    {
+        return EquipmentForm::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return EquipmentTable::configure($table);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListEquipment::route('/'),
+            'create' => CreateEquipment::route('/create'),
+            'edit' => EditEquipment::route('/{record}/edit'),
+        ];
+    }
+}

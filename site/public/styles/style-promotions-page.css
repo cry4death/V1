@@ -1,0 +1,611 @@
+.promotions-page {
+  background-color: var(--accent-color);
+}
+
+.promotions-section {
+  padding: 0 0 64px;
+  background-color: var(--accent-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.promotions-section .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Sea decorations ─── */
+
+.promotions-sea-decor {
+  position: absolute;
+  inset: 0;
+  display: none !important;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.promotions-sea-decor i {
+  position: absolute;
+  line-height: 1;
+  pointer-events: none;
+  color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.psd--anchor-lg {
+  font-size: 240px;
+  top: 20px;
+  right: 2%;
+  transform: rotate(-8deg);
+  color: rgba(var(--primary-color-rgb), 0.055);
+}
+
+.psd--lighthouse {
+  font-size: 160px;
+  bottom: 30px;
+  left: 1%;
+  transform: rotate(5deg);
+  color: rgba(var(--primary-color-rgb), 0.07);
+}
+
+.psd--ship {
+  font-size: 80px;
+  top: 30px;
+  right: 28%;
+  transform: rotate(5deg);
+}
+
+.psd--compass {
+  font-size: 90px;
+  top: 38%;
+  right: 5%;
+  transform: rotate(15deg);
+}
+
+.psd--anchor-sm {
+  font-size: 90px;
+  bottom: 50px;
+  right: 18%;
+  transform: rotate(18deg);
+  color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.psd--wave {
+  font-size: 110px;
+  bottom: 0;
+  left: 30%;
+  color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.psd--fish {
+  font-size: 64px;
+  top: 40%;
+  left: 26%;
+  transform: scaleX(-1) rotate(-6deg);
+}
+
+.psd--binoculars {
+  font-size: 44px;
+  top: 14%;
+  left: 6%;
+  transform: rotate(-10deg);
+  color: rgba(var(--primary-color-rgb), 0.07);
+}
+
+.psd--lifebuoy {
+  font-size: 58px;
+  top: 56%;
+  left: 11%;
+  transform: rotate(12deg);
+  color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.psd--ship-low {
+  font-size: 48px;
+  top: 82%;
+  left: 8%;
+  transform: rotate(6deg);
+  color: rgba(var(--primary-color-rgb), 0.06);
+}
+
+.psd--anchor-left {
+  font-size: 64px;
+  top: 27%;
+  left: 4%;
+  transform: rotate(-18deg);
+  color: rgba(var(--primary-color-rgb), 0.055);
+}
+
+.psd--wave-mid {
+  font-size: 80px;
+  top: 70%;
+  left: 22%;
+  transform: rotate(-4deg);
+  color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.psd--compass-low {
+  font-size: 56px;
+  top: 87%;
+  right: 28%;
+  transform: rotate(-10deg);
+  color: rgba(var(--primary-color-rgb), 0.055);
+}
+
+.psd--wheel-top {
+  font-size: 52px;
+  top: 18%;
+  left: 34%;
+  transform: rotate(8deg);
+  color: rgba(var(--primary-color-rgb), 0.065);
+}
+
+.promotions-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  margin-bottom: 4rem;
+}
+
+.promo-tab {
+  padding: 0.6rem 1.35rem;
+  border: none;
+  background: var(--light-text);
+  color: #555;
+  font: inherit;
+  font-weight: 500;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease;
+}
+
+.promo-tab:hover {
+  background: rgba(var(--primary-color-rgb), 0.08);
+  color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.18);
+}
+
+.promo-tab.active {
+  background: var(--primary-color);
+  color: var(--light-text);
+  box-shadow: 0 3px 10px rgba(var(--primary-color-rgb), 0.3);
+  font-weight: 600;
+}
+
+.promo-tab:active {
+  transform: scale(0.97);
+}
+
+.promotions-container {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.promo-card {
+  width: 100%;
+  min-width: 0;
+  background-color: var(--light-text);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.promo-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+.promo-image {
+  height: 190px;
+  overflow: hidden;
+  position: relative;
+}
+
+.promo-image::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.15), transparent);
+  pointer-events: none;
+}
+
+.promo-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.promo-content {
+  padding: 1.25rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.promo-badge {
+  padding: 0.2rem 0.7rem;
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  color: var(--primary-color);
+  font-weight: 600;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  align-self: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.promo-date-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.promo-date-range {
+  font-size: 0.78rem;
+  color: #888;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+.promo-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dark-text);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.35;
+}
+
+.promo-description {
+  font-size: 0.88rem;
+  color: #666;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.promo-chevron {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.promo-chevron-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(var(--primary-color-rgb), 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--primary-color);
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.promo-card:hover .promo-chevron-icon {
+  background: var(--primary-color);
+  color: var(--light-text);
+  transform: translateX(3px);
+}
+
+.promo-card.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.promo-card.animate-on-scroll.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.promo-card.animate-on-scroll.visible:hover {
+  transform: translateY(-6px);
+}
+
+.promo-pagination-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.promo-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.promo-pagination-ellipsis {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.promo-pagination-btn {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  border: 1px solid rgba(var(--primary-color-rgb), 0.3);
+  background: var(--light-text);
+  color: var(--primary-color);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.promo-pagination-btn:hover {
+  background: rgba(var(--primary-color-rgb), 0.08);
+  border-color: rgba(var(--primary-color-rgb), 0.5);
+}
+
+.promo-pagination-btn.active {
+  background: var(--primary-color);
+  color: var(--light-text);
+  border-color: var(--primary-color);
+}
+
+.promo-show-more {
+  padding: 0.75rem 2rem;
+  border: 2px solid var(--primary-color);
+  background: var(--light-text);
+  color: var(--primary-color);
+  font: inherit;
+  font-weight: 600;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.promo-show-more:hover {
+  background: var(--primary-color);
+  color: var(--light-text);
+}
+
+@media (max-width: 1199px) {
+  .promotions-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    max-width: 100%;
+  }
+  .promotions-section {
+    padding: 0 0 64px;
+  }
+  .promo-content {
+    padding: 1.125rem 1.25rem 1.25rem;
+  }
+  .promo-image {
+    height: 170px;
+  }
+}
+
+@media (max-width: 900px) {
+  .promotions-sea-decor {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(7, minmax(82px, 1fr));
+    align-content: space-between;
+    padding: 24px clamp(12px, 4vw, 28px) 34px;
+  }
+
+  .promotions-sea-decor i {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    display: block;
+  }
+
+  .psd--anchor-lg {
+    grid-row: 1;
+    grid-column: 1;
+    justify-self: start;
+    align-self: start;
+    font-size: clamp(72px, 14vw, 96px);
+  }
+
+  .psd--ship {
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: end;
+    align-self: start;
+    font-size: clamp(30px, 6vw, 42px);
+  }
+
+  .psd--binoculars {
+    grid-row: 2;
+    grid-column: 1;
+    justify-self: start;
+    align-self: center;
+    font-size: clamp(26px, 5vw, 34px);
+  }
+
+  .psd--wheel-top {
+    grid-row: 2;
+    grid-column: 2;
+    justify-self: end;
+    align-self: center;
+    font-size: clamp(30px, 6vw, 42px);
+  }
+
+  .psd--anchor-left {
+    grid-row: 3;
+    grid-column: 1;
+    justify-self: start;
+    align-self: center;
+    font-size: clamp(38px, 8vw, 52px);
+  }
+
+  .psd--compass {
+    grid-row: 3;
+    grid-column: 2;
+    justify-self: end;
+    align-self: center;
+    font-size: clamp(34px, 7vw, 48px);
+  }
+
+  .psd--fish {
+    grid-row: 4;
+    grid-column: 1;
+    justify-self: start;
+    align-self: center;
+    font-size: clamp(30px, 6vw, 42px);
+  }
+
+  .psd--lifebuoy {
+    grid-row: 4;
+    grid-column: 2;
+    justify-self: end;
+    align-self: center;
+    font-size: clamp(34px, 7vw, 46px);
+  }
+
+  .psd--lighthouse {
+    grid-row: 5;
+    grid-column: 1;
+    justify-self: start;
+    align-self: center;
+    font-size: clamp(44px, 8vw, 58px);
+  }
+
+  .psd--wave-mid {
+    grid-row: 5;
+    grid-column: 2;
+    justify-self: end;
+    align-self: center;
+    font-size: clamp(42px, 8vw, 56px);
+  }
+
+  .psd--ship-low {
+    grid-row: 6;
+    grid-column: 1;
+    justify-self: start;
+    align-self: center;
+    font-size: clamp(30px, 6vw, 42px);
+  }
+
+  .psd--compass-low {
+    grid-row: 6;
+    grid-column: 2;
+    justify-self: end;
+    align-self: center;
+    font-size: clamp(32px, 7vw, 44px);
+  }
+
+  .psd--anchor-sm {
+    grid-row: 7;
+    grid-column: 1;
+    justify-self: start;
+    align-self: end;
+    font-size: clamp(40px, 8vw, 54px);
+  }
+
+  .psd--wave {
+    grid-row: 7;
+    grid-column: 2;
+    justify-self: end;
+    align-self: end;
+    font-size: clamp(42px, 9vw, 58px);
+  }
+}
+
+@media (max-width: 768px) {
+  .promotions-container {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .promotions-section {
+    padding: 0 0 64px;
+  }
+  .promotions-tabs {
+    display: none;
+  }
+  .promo-content {
+    padding: 1rem 1.125rem 1.125rem;
+  }
+  .promo-image {
+    height: 180px;
+  }
+
+  .promotions-sea-decor {
+    grid-template-rows: repeat(7, minmax(68px, 1fr));
+    padding: 18px clamp(10px, 4vw, 22px) 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .promotions-section {
+    padding: 0 0 64px;
+  }
+
+  .promotions-sea-decor {
+    padding: 14px 10px 22px;
+  }
+
+  .psd--anchor-lg {
+    font-size: clamp(60px, 18vw, 80px);
+  }
+
+  .psd--ship,
+  .psd--ship-low,
+  .psd--wheel-top {
+    font-size: 28px;
+  }
+
+  .psd--compass,
+  .psd--compass-low,
+  .psd--lifebuoy,
+  .psd--anchor-left,
+  .psd--anchor-sm {
+    font-size: 32px;
+  }
+
+  .psd--binoculars,
+  .psd--fish {
+    font-size: 24px;
+  }
+
+  .psd--lighthouse {
+    font-size: 40px;
+  }
+
+  .psd--wave,
+  .psd--wave-mid {
+    font-size: 38px;
+  }
+
+  .promo-content {
+    padding: 1rem;
+  }
+}
