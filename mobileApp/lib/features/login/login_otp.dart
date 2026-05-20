@@ -1,12 +1,18 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../core/constants/app_colors.dart';
+import '../../core/network/api_exception.dart';
 import '../../core/widgets/primary_button.dart';
+import '../auth/data/patient_auth_providers.dart';
 import '../auth/presentation/controllers/auth_controller.dart';
+import '../registration/steps/face_id_setup.dart';
+import '../registration/steps/pin_setup.dart';
 
 class LoginOtpScreen extends ConsumerStatefulWidget {
   final String phone;
@@ -30,6 +36,7 @@ class _LoginOtpScreenState extends ConsumerState<LoginOtpScreen> {
       List.generate(_otpLength, (_) => FocusNode());
 
   bool _isSuccess = false;
+  bool _busy = false;
 
   String get _otp => _controllers.map((c) => c.text).join();
   bool get _isComplete => _otp.length == _otpLength;
@@ -50,16 +57,64 @@ class _LoginOtpScreenState extends ConsumerState<LoginOtpScreen> {
       _focusNodes[index + 1].requestFocus();
     }
     setState(() {});
-    if (_isComplete) _confirm();
+    if (_isComplete && !_busy) {
+      _confirm();
+    }
   }
 
-  void _confirm() {
+  Future<void> _confirm() async {
+    if (!_isComplete || _busy) return;
     FocusScope.of(context).unfocus();
-    setState(() => _isSuccess = true);
-    ref.read(authControllerProvider.notifier).markAuthenticated();
-    Future.delayed(const Duration(milliseconds: 1600), () {
-      if (mounted) context.go('/dashboard');
-    });
+
+    setState(() => _busy = true);
+    try {
+      final result = await ref.read(patientAuthRepositoryProvider).verifyLoginOtp(
+            phone: '375${widget.phone}',
+            otp: _otp,
+          );
+      await ref.read(authControllerProvider.notifier).completeLoginWithApiToken(
+            accessToken: result.token,
+            patient: result.patient,
+          );
+      if (!mounted) return;
+      setState(() {
+        _isSuccess = true;
+        _busy = false;
+      });
+      // После OTP-входа — установка PIN (а не сразу дашборд).
+      Future.delayed(const Duration(milliseconds: 1600), () {
+        if (!mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => PinSetupScreen(
+              showProgress: false,
+              onNext: () {
+                // После PIN → запрос биометрии (или пропуск).
+                // FaceIdSetupScreen сама вызовет markAuthenticated() + go('/dashboard').
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const FaceIdSetupScreen(showProgress: false),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final msg = e.error is ApiException
+          ? (e.error! as ApiException).message
+          : (e.message ?? 'Ошибка сети');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+      for (final c in _controllers) {
+        c.clear();
+      }
+      _focusNodes[0].requestFocus();
+      setState(() => _busy = false);
+    }
   }
 
   @override
@@ -77,7 +132,6 @@ class _LoginOtpScreenState extends ConsumerState<LoginOtpScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top header row (back button + title) ──
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
               child: Row(
@@ -125,14 +179,12 @@ class _LoginOtpScreenState extends ConsumerState<LoginOtpScreen> {
               ),
             ).animate().fadeIn(duration: 300.ms),
 
-            // ── Content ──
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Column(
                   children: [
                     const SizedBox(height: 36),
-
                     Row(
                       children: [
                         for (var i = 0; i < _otpLength; i++) ...[
@@ -187,13 +239,6 @@ class _LoginOtpScreenState extends ConsumerState<LoginOtpScreen> {
                         ],
                       ],
                     ).animate().fadeIn(delay: 150.ms).moveY(begin: 20, end: 0),
-
-                    const SizedBox(height: 20),
-                    Text(
-                      'Демо: используйте любой 6-значный код',
-                      style: GoogleFonts.inter(
-                          fontSize: 13, color: AppColors.textHint),
-                    ),
                   ],
                 ),
               ),
@@ -202,8 +247,8 @@ class _LoginOtpScreenState extends ConsumerState<LoginOtpScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: PrimaryButton(
-                label: 'Войти',
-                isEnabled: _isComplete,
+                label: _busy ? 'Проверка…' : 'Войти',
+                isEnabled: _isComplete && !_busy,
                 onTap: _confirm,
               ),
             ),
@@ -213,8 +258,6 @@ class _LoginOtpScreenState extends ConsumerState<LoginOtpScreen> {
     );
   }
 }
-
-// ─── Success View ────────────────────────────────────────────────────────────
 
 class _SuccessView extends StatelessWidget {
   const _SuccessView();
@@ -331,7 +374,6 @@ class _CheckPainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2;
 
-    // Checkmark path: from (cx-14, cy) → (cx-4, cy+10) → (cx+14, cy-10)
     final path = Path()
       ..moveTo(cx - 14, cy)
       ..lineTo(cx - 4, cy + 10)

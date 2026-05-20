@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
+import '../dashboard_tab_provider.dart';
+import 'edit_profile_screen.dart';
 
 // ─── Menu Data ────────────────────────────────────────────────────────────────
 
@@ -33,22 +35,10 @@ const _sections = [
       id: 'edit-profile',
       icon: Icons.edit_outlined,
       label: 'Редактировать профиль',
-      subtitle: 'ФИО, дата рождения, контакты',
-    ),
-    _MenuItem(
-      id: 'addresses',
-      icon: Icons.location_on_outlined,
-      label: 'Адреса',
-      subtitle: 'Управление адресами доставки',
+      subtitle: 'ФИО, дата рождения, пол',
     ),
   ]),
   _MenuSection(title: 'Медицинская информация', items: [
-    _MenuItem(
-      id: 'medical-history',
-      icon: Icons.description_outlined,
-      label: 'Медицинская карта',
-      subtitle: 'История болезней и анализы',
-    ),
     _MenuItem(
       id: 'appointments',
       icon: Icons.calendar_month_outlined,
@@ -67,13 +57,7 @@ const _sections = [
       id: 'security',
       icon: Icons.shield_outlined,
       label: 'Безопасность',
-      subtitle: 'PIN, Face ID, пароль',
-    ),
-    _MenuItem(
-      id: 'payment',
-      icon: Icons.credit_card_outlined,
-      label: 'Способы оплаты',
-      subtitle: 'Карты и методы оплаты',
+      subtitle: 'Смена номера, выход со всех устройств',
     ),
   ]),
   _MenuSection(title: 'Поддержка', items: [
@@ -105,10 +89,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // подтянуть актуальные данные если ещё не загружены
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(authControllerProvider.notifier).bootstrap();
     });
+  }
+
+  static String _formatBirthDate(String raw) {
+    if (raw.isEmpty) return '';
+    final parts = raw.split('-');
+    if (parts.length == 3) return '${parts[2]}.${parts[1]}.${parts[0]}';
+    return raw;
+  }
+
+  /// Инициалы из имени и фамилии (до 2 букв).
+  static String _initials(String firstName, String lastName) {
+    final f = firstName.isNotEmpty ? firstName[0].toUpperCase() : '';
+    final l = lastName.isNotEmpty ? lastName[0].toUpperCase() : '';
+    return '$f$l';
   }
 
   Future<void> _logout() async {
@@ -117,8 +114,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Выйти из аккаунта?',
-            style: GoogleFonts.inter(
-                fontWeight: FontWeight.w700, fontSize: 17)),
+            style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 17)),
         content: Text(
           'Вы уверены, что хотите выйти?',
           style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF717784)),
@@ -126,15 +122,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Отмена',
-                style: GoogleFonts.inter(color: AppColors.primary)),
+            child: Text('Отмена', style: GoogleFonts.inter(color: AppColors.primary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text('Выйти',
                 style: GoogleFonts.inter(
-                    color: const Color(0xFFE05252),
-                    fontWeight: FontWeight.w600)),
+                    color: const Color(0xFFE05252), fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -148,10 +142,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
-    final displayName = auth.firstName.isEmpty ? 'Пользователь' : auth.firstName;
-    final displayLast = auth.lastName;
-    final phone = auth.phone;
-    final bottomPad = MediaQuery.of(context).padding.bottom + 80;
+    final firstName  = auth.firstName.isEmpty ? 'Пользователь' : auth.firstName;
+    final lastName   = auth.lastName;
+    final middleName = auth.middleName;
+    final phone      = auth.phone;
+    final birthDate  = _formatBirthDate(auth.birthDate);
+    final genderLabel = auth.gender == 'male'
+        ? 'Мужской'
+        : auth.gender == 'female'
+            ? 'Женский'
+            : '';
+    final initials   = _initials(firstName, lastName);
+    final bottomPad  = MediaQuery.of(context).padding.bottom + 80;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
@@ -163,10 +165,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              // ── Header: gradient top half / gray bottom half ──
+              // ── Header ────────────────────────────────────────────
               Stack(
                 children: [
-                  // Two-tone background (fills Stack height adaptively)
                   Positioned.fill(
                     child: Column(
                       children: [
@@ -184,14 +185,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         Flexible(
                           flex: 44,
-                          child: Container(
-                              color: const Color(0xFFF7F9FC)),
+                          child: Container(color: const Color(0xFFF7F9FC)),
                         ),
                       ],
                     ),
                   ),
 
-                  // Content (determines Stack height)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                     child: Column(
@@ -208,123 +207,101 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                           ),
                         ),
+
+                        // ── Profile card ──────────────────────────
                         Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFF0F4F8)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(26),
-                              blurRadius: 20,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(20),
-                        child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Avatar
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white, width: 3),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withAlpha(26),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                                color: const Color(0xFFE8F4FD),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(17),
-                                child: Image.network(
-                                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => const Icon(
-                                      Icons.person,
-                                      size: 40,
-                                      color: AppColors.primary),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: -4,
-                              right: -4,
-                              child: Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(9),
-                                  border: Border.all(color: Colors.white, width: 2),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primary.withAlpha(100),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(Icons.edit_outlined,
-                                    size: 13, color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(width: 16),
-
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '$displayName Ивановна',
-                                style: GoogleFonts.inter(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF222222),
-                                  height: 1.2,
-                                ),
-                              ),
-                              if (displayLast.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  displayLast,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF222222),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 10),
-                              if (phone.isNotEmpty)
-                                _InfoChip(
-                                  icon: Icons.phone_outlined,
-                                  text: phone,
-                                ),
-                              const SizedBox(height: 4),
-                              const _InfoChip(
-                                icon: Icons.calendar_today_outlined,
-                                text: '15.03.1990',
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFF0F4F8)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(26),
+                                blurRadius: 20,
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                        ).animate().fadeIn(duration: 350.ms).slideY(
-                            begin: 0.1, curve: Curves.easeOut),
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Аватар с инициалами
+                              Container(
+                                width: 72,
+                                height: 72,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF4682B4), Color(0xFF1E5A99)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF4682B4).withAlpha(60),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  initials,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 16),
+
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Имя + Отчество
+                                    Text(
+                                      [firstName, if (middleName.isNotEmpty) middleName].join(' '),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF222222),
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                    // Фамилия
+                                    if (lastName.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        lastName,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF222222),
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 10),
+                                    if (phone.isNotEmpty)
+                                      _InfoChip(icon: Icons.phone_outlined, text: '+$phone'),
+                                    if (birthDate.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      _InfoChip(icon: Icons.cake_outlined, text: birthDate),
+                                    ],
+                                    if (genderLabel.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      _InfoChip(icon: Icons.person_outline, text: genderLabel),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.1, curve: Curves.easeOut),
                       ],
                     ),
                   ),
@@ -333,16 +310,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
               const SizedBox(height: 16),
 
-              // ── Menu sections ──
+              // ── Menu sections ──────────────────────────────────────
               ..._sections.asMap().entries.map((e) => Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: _SectionCard(
-                      section: e.value,
-                      delay: (e.key * 60).ms,
-                    ),
+                    child: _SectionCard(section: e.value, delay: (e.key * 60).ms),
                   )),
 
-              // ── Logout ──
+              // ── Logout ─────────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: GestureDetector(
@@ -358,8 +332,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.logout_outlined,
-                            size: 18, color: Color(0xFFE05252)),
+                        const Icon(Icons.logout_outlined, size: 18, color: Color(0xFFE05252)),
                         const SizedBox(width: 10),
                         Text(
                           'Выйти из аккаунта',
@@ -375,15 +348,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ).animate().fadeIn(delay: 280.ms, duration: 300.ms),
               ),
 
-              // ── Version ──
+              // ── Version ────────────────────────────────────────────
               Padding(
                 padding: EdgeInsets.fromLTRB(0, 12, 0, bottomPad),
                 child: Center(
                   child: Text(
                     'Маяк здоровья v1.0.0',
                     style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: const Color(0xFFC8D8E8)),
+                        fontSize: 11, color: const Color(0xFFC8D8E8)),
                   ),
                 ),
               ),
@@ -395,7 +367,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-// ─── Info chip row ─────────────────────────────────────────────────────────────
+// ─── Info chip ────────────────────────────────────────────────────────────────
 
 class _InfoChip extends StatelessWidget {
   final IconData icon;
@@ -411,8 +383,7 @@ class _InfoChip extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.inter(
-                fontSize: 12, color: const Color(0xFF717784)),
+            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF717784)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -424,13 +395,13 @@ class _InfoChip extends StatelessWidget {
 
 // ─── Section card ─────────────────────────────────────────────────────────────
 
-class _SectionCard extends StatelessWidget {
+class _SectionCard extends ConsumerWidget {
   final _MenuSection section;
   final Duration delay;
   const _SectionCard({required this.section, required this.delay});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -461,15 +432,28 @@ class _SectionCard extends StatelessWidget {
           ),
           child: Column(
             children: section.items.asMap().entries.map((e) {
-              final item = e.value;
+              final item  = e.value;
               final isLast = e.key == section.items.length - 1;
-              return _MenuTile(item: item, isLast: isLast);
+              final onTap  = _resolveOnTap(item.id, context, ref);
+              return _MenuTile(item: item, isLast: isLast, onTap: onTap);
             }).toList(),
           ),
         ),
       ],
-    ).animate().fadeIn(delay: delay, duration: 280.ms).slideY(
-        begin: 0.08, curve: Curves.easeOut);
+    ).animate().fadeIn(delay: delay, duration: 280.ms).slideY(begin: 0.08, curve: Curves.easeOut);
+  }
+
+  static VoidCallback? _resolveOnTap(String id, BuildContext context, WidgetRef ref) {
+    switch (id) {
+      case 'edit-profile':
+        return () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+            );
+      case 'appointments':
+        return () => ref.read(dashboardTabIndexProvider.notifier).state = 3;
+      default:
+        return null;
+    }
   }
 }
 
@@ -478,7 +462,8 @@ class _SectionCard extends StatelessWidget {
 class _MenuTile extends StatefulWidget {
   final _MenuItem item;
   final bool isLast;
-  const _MenuTile({required this.item, required this.isLast});
+  final VoidCallback? onTap;
+  const _MenuTile({required this.item, required this.isLast, this.onTap});
 
   @override
   State<_MenuTile> createState() => _MenuTileState();
@@ -489,11 +474,13 @@ class _MenuTileState extends State<_MenuTile> {
 
   @override
   Widget build(BuildContext context) {
+    final hasAction = widget.onTap != null;
+
     return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: () {},
+      onTapDown: hasAction ? (_) => setState(() => _pressed = true) : null,
+      onTapUp: hasAction ? (_) => setState(() => _pressed = false) : null,
+      onTapCancel: hasAction ? () => setState(() => _pressed = false) : null,
+      onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -501,15 +488,10 @@ class _MenuTileState extends State<_MenuTile> {
           color: _pressed ? const Color(0xFFF7F9FC) : Colors.white,
           border: widget.isLast
               ? null
-              : const Border(
-                  bottom: BorderSide(color: Color(0xFFF0F4F8))),
-          borderRadius: widget.isLast
-              ? null
-              : null,
+              : const Border(bottom: BorderSide(color: Color(0xFFF0F4F8))),
         ),
         child: Row(
           children: [
-            // Icon box
             Container(
               width: 40,
               height: 40,
@@ -517,11 +499,9 @@ class _MenuTileState extends State<_MenuTile> {
                 color: const Color(0xFFE8F4FD),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(widget.item.icon,
-                  size: 18, color: const Color(0xFF4682B4)),
+              child: Icon(widget.item.icon, size: 18, color: const Color(0xFF4682B4)),
             ),
             const SizedBox(width: 14),
-            // Text
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,20 +518,17 @@ class _MenuTileState extends State<_MenuTile> {
                     const SizedBox(height: 2),
                     Text(
                       widget.item.subtitle!,
-                      style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: const Color(0xFFA0AABF)),
+                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFA0AABF)),
                     ),
                   ],
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right,
-                size: 18, color: Color(0xFFC8D8E8)),
+            if (hasAction)
+              const Icon(Icons.chevron_right, size: 18, color: Color(0xFFC8D8E8)),
           ],
         ),
       ),
     );
   }
 }
-

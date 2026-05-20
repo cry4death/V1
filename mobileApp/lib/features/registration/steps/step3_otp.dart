@@ -1,10 +1,14 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../core/constants/app_colors.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../auth/data/patient_auth_providers.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
 import '../presentation/controllers/registration_controller.dart';
 import '_progress_bar.dart';
@@ -30,6 +34,9 @@ class _Step3OtpState extends ConsumerState<Step3Otp> {
   final List<FocusNode> _focusNodes =
       List.generate(_otpLength, (_) => FocusNode());
 
+  bool _busy = false;
+  String? _otpError;
+
   String get _otp => _controllers.map((c) => c.text).join();
   bool get _isComplete => _otp.length == _otpLength;
 
@@ -45,11 +52,12 @@ class _Step3OtpState extends ConsumerState<Step3Otp> {
   }
 
   void _onDigitChanged(int index, String value) {
+    if (_otpError != null) setState(() => _otpError = null);
     if (value.length == 1 && index < _otpLength - 1) {
       _focusNodes[index + 1].requestFocus();
     }
     setState(() {});
-    if (_isComplete) {
+    if (_isComplete && !_busy) {
       _confirm();
     }
   }
@@ -59,18 +67,59 @@ class _Step3OtpState extends ConsumerState<Step3Otp> {
       _focusNodes[index - 1].requestFocus();
       _controllers[index - 1].clear();
     }
+    if (_otpError != null) setState(() => _otpError = null);
     setState(() {});
   }
 
   Future<void> _confirm() async {
+    if (!_isComplete || _busy) return;
+
+    setState(() {
+      _busy = true;
+      _otpError = null;
+    });
     final data = ref.read(registrationControllerProvider).data;
-    await ref.read(authControllerProvider.notifier).completeRegistration(
-          firstName: data.firstName,
-          lastName: data.lastName,
-          phone: data.phone,
+    try {
+      final result =
+          await ref.read(patientAuthRepositoryProvider).registerVerify(
+                phone: data.phoneE164,
+                otp: _otp,
+              );
+      final p = result.patient;
+      final first = p['first_name'] as String? ?? data.firstName;
+      final last = p['last_name'] as String? ?? data.lastName;
+      final phone = p['phone'] as String? ?? data.phoneE164;
+
+      await ref.read(authControllerProvider.notifier).completeRegistrationWithApiToken(
+            accessToken: result.token,
+            firstName: first,
+            lastName: last,
+            phone: phone,
+          );
+      if (!mounted) return;
+      widget.onNext();
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final code = e.response?.statusCode;
+      final isClientError = code != null && code >= 400 && code < 500;
+      if (isClientError) {
+        setState(() => _otpError = 'Неверный или просроченный код');
+      } else {
+        final msg = e.error is ApiException
+            ? (e.error! as ApiException).message
+            : (e.message ?? 'Ошибка сети');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
         );
-    if (!mounted) return;
-    widget.onNext();
+      }
+      for (final c in _controllers) {
+        c.clear();
+      }
+      _focusNodes[0].requestFocus();
+      setState(() {});
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
@@ -147,15 +196,20 @@ class _Step3OtpState extends ConsumerState<Step3Otp> {
                         ],
                       ),
                     ).animate().fadeIn(duration: 400.ms).moveY(begin: 20, end: 0),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Демо: используйте любой 6-значный код',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: AppColors.textHint,
+                    if (_otpError != null) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          _otpError!,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.error,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -163,9 +217,9 @@ class _Step3OtpState extends ConsumerState<Step3Otp> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
               child: PrimaryButton(
-                label: 'Подтвердить',
+                label: _busy ? 'Проверка…' : 'Подтвердить',
                 onTap: _confirm,
-                isEnabled: _isComplete,
+                isEnabled: _isComplete && !_busy,
               ),
             ),
           ],

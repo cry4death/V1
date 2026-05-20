@@ -596,6 +596,154 @@ a.category-card {
   transform: rotate(10deg);
 }
 
+/* ── Грид-обзор: карточки направлений ── */
+
+.services-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.services-dir-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+  padding: 2rem 1.5rem 1.75rem;
+  background: var(--light-text);
+  border: 1px solid rgba(209, 224, 236, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  font: inherit;
+  color: #333;
+  text-decoration: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.services-dir-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(var(--primary-color-rgb), 0.1), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.services-dir-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(19, 55, 94, 0.12);
+  border-color: rgba(var(--primary-color-rgb), 0.35);
+  color: #333;
+}
+
+.services-dir-card:hover::before {
+  opacity: 1;
+}
+
+.services-dir-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff 0, rgba(232, 244, 253, 0.9) 40%, rgba(70, 130, 180, 0.15) 100%);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  transition: var(--transition);
+  flex-shrink: 0;
+  margin-bottom: 1rem;
+}
+
+.services-dir-card:hover .services-dir-card-icon {
+  background: radial-gradient(circle at 30% 30%, #fff 0, rgba(218, 237, 252, 0.95) 40%, rgba(70, 130, 180, 0.25) 100%);
+}
+
+.services-dir-card-icon .direction-custom-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  object-fit: contain;
+}
+
+.services-dir-card-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 0.35rem;
+  color: #1a1a1a;
+}
+
+.services-dir-card-count {
+  font-size: 0.88rem;
+  color: #666;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.services-dir-card-chevron {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.services-dir-card-chevron-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(var(--primary-color-rgb), 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--primary-color);
+  transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+}
+
+.services-dir-card:hover .services-dir-card-chevron-icon {
+  background: var(--primary-color);
+  color: var(--light-text);
+  transform: translateX(3px);
+}
+
+/* ── Кнопка/ссылка "назад" на странице детального направления ── */
+
+.services-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 0.5rem 0.75rem;
+  background: var(--light-text);
+  border: 1px solid rgba(var(--primary-color-rgb), 0.2);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 1.25rem;
+}
+
+.services-back-btn:hover {
+  background: rgba(var(--primary-color-rgb), 0.07);
+  border-color: rgba(var(--primary-color-rgb), 0.35);
+  color: var(--primary-color);
+}
+
+.services-back-btn i {
+  font-size: 0.85rem;
+}
+
+/* ── Лэйаут с сайдбаром ── */
+
 .services-page-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -638,30 +786,14 @@ a.category-card {
 
 .services-sidebar {
   position: sticky;
-  top: 1.5rem;
-  max-height: calc(100vh - 3rem);
-  overflow-y: auto;
+  top: 7.5rem;
   background: var(--light-text);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(var(--primary-color-rgb), 0.06);
   padding: 0;
-  border-left: 4px solid var(--primary-color);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--primary-color-rgb), 0.3) transparent;
+ 
 }
 
-.services-sidebar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.services-sidebar::-webkit-scrollbar-thumb {
-  background: rgba(var(--primary-color-rgb), 0.3);
-  border-radius: 4px;
-}
-
-.services-sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
 
 .services-nav {
   display: flex;
@@ -672,15 +804,16 @@ a.category-card {
 .services-nav-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
   width: 100%;
-  padding: 0.6rem 1.25rem;
+  padding: 0.35rem 0.9rem;
   border: none;
   background: none;
   text-align: left;
   font: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #444;
+  text-decoration: none;
   cursor: pointer;
   transition: var(--transition);
   box-sizing: border-box;
@@ -688,15 +821,15 @@ a.category-card {
 
 .services-nav-icon {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #fff 0, rgba(232, 244, 253, 0.9) 40%, rgba(70, 130, 180, 0.15) 100%);
   color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.85rem;
   transition: var(--transition);
 }
 
@@ -707,8 +840,8 @@ a.category-card {
 }
 
 .services-nav-icon .direction-custom-icon {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 0.95rem;
+  height: 0.95rem;
   object-fit: contain;
 }
 
@@ -1049,6 +1182,10 @@ a.category-card {
     grid-template-columns: 220px 1fr;
     gap: 1.5rem;
   }
+
+  .services-overview-grid {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
@@ -1328,6 +1465,15 @@ a.category-card {
 
   .services-page-layout {
     grid-template-columns: 1fr;
+  }
+
+  .services-overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .services-dir-card {
+    padding: 1.25rem 0.75rem;
   }
 
   .services-grid {

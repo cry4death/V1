@@ -247,7 +247,7 @@ class ArticleScreen extends ConsumerWidget {
                                 );
                               }
                               final origin =
-                                  Uri.parse(kApiBaseUrl).origin;
+                                  Uri.parse(resolvedApiBaseUrl).origin;
                               final htmlData = stripJustifyFromHtml(
                                 preprocessHtmlForFlutter(
                                   raw,

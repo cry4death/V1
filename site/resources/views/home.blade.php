@@ -27,7 +27,7 @@
                 <h1>Медицинский центр<br>«{{ $hero['title'] ?? 'Маяк Здоровья' }}»</h1>
                 <p class="hero-desc">Амбулаторная помощь, диагностика и лечение по 20 медицинским направлениям. Приём ведут профильные специалисты, доступны лабораторные исследования.</p>
                 <div class="hero-buttons">
-                    <a href="#appointment" class="btn primary-btn">Записаться на приём <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="{{ route('booking.start') }}" class="btn primary-btn">Записаться на приём <i class="fa-solid fa-arrow-right"></i></a>
                     <a href="#services" class="btn secondary-btn">Наши услуги</a>
                 </div>
             </div>

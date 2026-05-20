@@ -51,6 +51,16 @@ class ServiceForm
                     ->suffix('BYN')
                     ->helperText('0 — на странице цена не показывается в списке направления.'),
 
+                TextInput::make('duration_minutes')
+                    ->label('Длительность приёма (мин.)')
+                    ->numeric()
+                    ->default(30)
+                    ->minValue(5)
+                    ->maxValue(240)
+                    ->step(5)
+                    ->required()
+                    ->helperText('Один слот приёма по этой услуге. Шаг сетки слотов задаётся в «Настройки сайта» → «Онлайн-запись» (если пусто — используется это значение).'),
+
                 Textarea::make('description')
                     ->label('Описание')
                     ->rows(4)

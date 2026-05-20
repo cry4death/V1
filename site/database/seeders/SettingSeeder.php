@@ -35,6 +35,11 @@ class SettingSeeder extends Seeder
                 'unp' => '123456789',
                 'license_number' => 'Лицензия №М-12345 от 01.01.2020',
             ],
+            'booking' => [
+                'slot_step_minutes' => '20',
+                'min_lead_minutes' => '60',
+                'cancel_window_hours' => '3',
+            ],
         ];
 
         foreach ($settings as $group => $items) {

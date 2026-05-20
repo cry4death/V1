@@ -10,10 +10,13 @@ import '_numpad.dart';
 
 class PinSetupScreen extends ConsumerStatefulWidget {
   final VoidCallback onNext;
+  /// Показывать ли прогресс-бар регистрации (false — для входа по OTP).
+  final bool showProgress;
 
   const PinSetupScreen({
     super.key,
     required this.onNext,
+    this.showProgress = true,
   });
 
   @override
@@ -93,7 +96,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            RegistrationProgressBar(step: 4, total: 5),
+            if (widget.showProgress) RegistrationProgressBar(step: 4, total: 5),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),

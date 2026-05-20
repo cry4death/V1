@@ -1,0 +1,1658 @@
+/* Онлайн-запись: мастер (§3.2) */
+.booking-wizard {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2.5rem 1rem 4rem;
+}
+
+/* When booking wizard is inside cabinet-main — padding is already on the parent */
+.cabinet-main .booking-wizard {
+    padding: 0;
+    max-width: 100%;
+}
+
+.booking-wizard h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 0.35rem;
+}
+
+.booking-wizard .booking-lead {
+    color: #64748b;
+    margin: 0 0 1.25rem;
+    line-height: 1.5;
+}
+
+.booking-progress {
+    margin-bottom: 1.75rem;
+    padding: 0.85rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.booking-progress__steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    font-size: 0.9rem;
+}
+
+.booking-progress__step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #94a3b8;
+}
+
+.booking-progress__step.is-active {
+    color: var(--primary-color, #4682b4);
+    font-weight: 600;
+}
+
+.booking-progress__step.is-done {
+    color: var(--primary-color, #4682b4);
+}
+
+.booking-progress__num {
+    font-variant-numeric: tabular-nums;
+}
+
+.booking-progress__arrow {
+    color: #cbd5e1;
+    user-select: none;
+}
+
+.booking-progress__step.is-done .booking-progress__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: inherit;
+    text-decoration: none;
+    border-radius: 6px;
+    padding: 0.15rem 0.4rem;
+    margin: -0.15rem -0.4rem;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.booking-progress__step.is-done .booking-progress__link:hover {
+    background: rgba(70, 130, 180, 0.12);
+    color: var(--secondary-color, #1e5a99);
+    text-decoration: underline;
+}
+
+.booking-alert {
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    line-height: 1.45;
+}
+
+.booking-alert--error {
+    color: var(--error-color, #dc3545);
+    background: #fef2f2;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.booking-alert--ok {
+    color: #166534;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+}
+
+.booking-empty {
+    padding: 1.25rem;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    line-height: 1.55;
+}
+
+.booking-services-group {
+    margin-bottom: 2rem;
+}
+
+.booking-services-group h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #334155;
+    margin: 0 0 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* ── Аккордеон направлений ── */
+.booking-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.booking-acc-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.booking-acc-item:has(.booking-acc-header[aria-expanded="true"]) {
+    border-color: var(--primary-color, #4682b4);
+    box-shadow: 0 4px 16px rgba(70, 130, 180, 0.12);
+}
+
+.booking-acc-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: left;
+    transition: background 0.2s, color 0.2s;
+}
+
+.booking-acc-header:hover {
+    background: #f1f7fd;
+    color: var(--primary-color, #4682b4);
+}
+
+.booking-acc-header[aria-expanded="true"] {
+    background: var(--primary-color, #4682b4);
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+.booking-acc-header > span:first-child {
+    flex: 1;
+}
+
+.booking-acc-icon {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    transition: transform 0.25s ease, color 0.2s;
+    flex-shrink: 0;
+}
+
+.booking-acc-header[aria-expanded="true"] .booking-acc-icon {
+    transform: rotate(180deg);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.booking-acc-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.booking-acc-header[aria-expanded="true"] + .booking-acc-body {
+    padding: 0.75rem 0 0;
+}
+
+.booking-service-link {
+    display: block;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.booking-service-link:hover {
+    border-color: var(--primary-color, #4682b4);
+    background: var(--accent-color, #e8f4fd);
+}
+
+.booking-service-link strong {
+    font-weight: 600;
+}
+
+.booking-service-link .muted {
+    color: #64748b;
+    font-weight: 400;
+}
+
+.booking-doctors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+}
+
+.booking-slot-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .booking-slot-layout {
+        grid-template-columns: minmax(280px, 340px) 1fr;
+        align-items: start;
+    }
+}
+
+.booking-slot-col h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.65rem;
+    color: #334155;
+}
+
+.booking-slot-skeleton {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Иначе display:flex выше перебивает встроенное скрытие по атрибуту hidden */
+.booking-slot-skeleton[hidden] {
+    display: none !important;
+}
+
+.booking-slot-skeleton .pulse {
+    width: 4.25rem;
+    height: 2.35rem;
+    border-radius: 8px;
+    background: #e2e8f0;
+    animation: booking-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes booking-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+}
+
+.booking-slot-btn {
+    padding: 0.5rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: white;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #0f172a;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.booking-slot-btn:hover {
+    border-color: var(--primary-color, #4682b4);
+}
+
+.booking-slot-btn.is-selected {
+    background: var(--accent-color, #e8f4fd);
+    border-color: var(--primary-color, #4682b4);
+    color: var(--secondary-color, #1e5a99);
+    font-weight: 600;
+}
+
+.booking-actions-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.booking-back {
+    display: inline-block;
+    margin-top: 2rem;
+    color: #64748b;
+    text-decoration: none;
+}
+
+.booking-back:hover {
+    color: var(--primary-color, #4682b4);
+}
+
+.booking-start-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 320px;
+}
+
+.consent-label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    font-size: 0.92rem;
+    color: #475569;
+    cursor: pointer;
+    line-height: 1.45;
+}
+
+.consent-label input {
+    margin-top: 0.2rem;
+}
+
+/* ── Flatpickr calendar — site-blue theme ── */
+.flatpickr-calendar.inline {
+    margin: 0 auto;
+}
+
+.flatpickr-calendar {
+    font-family: inherit;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(30, 90, 153, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #d1dce8;
+    padding: 0 0 8px;
+    overflow: visible; /* allows year panel to drop below header */
+    width: 100%;
+    max-width: 340px;
+    min-width: 288px;
+    box-sizing: border-box;
+}
+
+.flatpickr-rContainer {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ── Calendar header — dark, high-contrast, 60 px tall ── */
+.flatpickr-months {
+    background: var(--secondary-color, #1e5a99);
+    border-radius: 12px 12px 0 0; /* clip the calendar's top corners here */
+    overflow: hidden;
+    height: 60px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 50px; /* 48px arrow + 2px gap — pills almost flush with buttons */
+    box-sizing: border-box;
+}
+
+.flatpickr-months .flatpickr-month {
+    background: transparent;
+    color: #fff;
+    border-radius: 0;
+    height: 60px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Month + year block — stretch to fill full available width */
+.flatpickr-current-month {
+    position: static !important;
+    left: unset !important;
+    width: 100% !important;  /* fill the flex space, so pills stretch to arrows */
+    height: auto;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.flatpickr-current-month input.cur-year {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    background: transparent;
+    border: none;
+    width: 54px;
+    padding: 0;
+    text-align: left;
+}
+
+/* Month dropdown — separate bg-color and bg-image so hover doesn't kill the arrow */
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: rgba(255, 255, 255, 0.14);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 10px 7px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    border: 1.5px solid rgba(255, 255, 255, 0.38);
+    border-radius: 8px;
+    padding: 7px 32px 7px 12px;
+    cursor: pointer;
+    line-height: 1.35;
+    transition: background-color 0.15s, border-color 0.15s;
+    margin: 0;
+}
+
+/* Fix: repeat background-image on hover/focus so the chevron never disappears */
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover,
+.flatpickr-current-month .flatpickr-monthDropdown-months:focus {
+    background-color: rgba(255, 255, 255, 0.30);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 10px 7px;
+    border-color: rgba(255, 255, 255, 0.75);
+    outline: none;
+}
+
+/* Dropdown options — white bg, dark text */
+.flatpickr-current-month .flatpickr-monthDropdown-months option {
+    background-color: #fff;
+    color: #1a3560;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months option:checked {
+    background-color: #dbeafe;
+    color: #1e3d6b;
+}
+
+/* ── Custom year/month dropdowns ── */
+.fp-year-wrap {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    display: flex;
+}
+
+/* Pill trigger — fills available space in header */
+.fp-year-pill {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    background-color: rgba(255, 255, 255, 0.14);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 10px 7px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: inherit;
+    border: 1.5px solid rgba(255, 255, 255, 0.38);
+    border-radius: 8px;
+    padding: 6px 24px 6px 8px;
+    background-position: right 7px center;
+    cursor: pointer;
+    line-height: 1.35;
+    transition: background-color 0.15s, border-color 0.15s;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fp-year-pill span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.fp-year-pill:hover,
+.fp-year-pill:focus {
+    background-color: rgba(255, 255, 255, 0.30);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 10px 7px;
+    border-color: rgba(255, 255, 255, 0.75);
+    outline: none;
+}
+
+/* Dropdown panels — appended to body, positioned via JS */
+.fp-year-panel {
+    position: fixed;
+    z-index: 999999;
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0;
+    min-width: 120px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--primary-color, #4682b4);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(70, 130, 180, 0.18);
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color, #4682b4) #f1f5f9;
+}
+
+/* Month panel — max-height set in JS so list stays inside calendar bottom */
+.fp-month-panel {
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.fp-year-panel li {
+    padding: 0.55rem 1rem;
+    font-size: 0.9rem;
+    color: #1a3560;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+    list-style: none;
+}
+
+.fp-year-panel li:first-child { border-radius: 9px 9px 0 0; }
+.fp-year-panel li:last-child  { border-radius: 0 0 9px 9px; }
+
+.fp-year-panel li:hover {
+    background: rgba(70, 130, 180, 0.1);
+    color: var(--primary-color, #4682b4);
+}
+
+.fp-year-panel li.is-active {
+    background: rgba(70, 130, 180, 0.16);
+    color: var(--secondary-color, #1e5a99);
+    font-weight: 700;
+}
+
+/* Input shown on double-click for manual year entry — same type size as .fp-year-pill */
+.fp-year-input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: inherit;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 6px 8px;
+    outline: none;
+    line-height: 1.35;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.fp-year-input::-webkit-outer-spin-button,
+.fp-year-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Equal width: month select matches year pill (fallback if JS doesn't replace it) */
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    width: 120px;
+    box-sizing: border-box;
+}
+
+/* Prev / next arrows — full header height, large tap target, centred icon */
+.flatpickr-prev-month,
+.flatpickr-next-month {
+    position: absolute !important;
+    top: 0 !important;
+    height: 60px !important;
+    width: 48px;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: #fff !important;
+    fill: #fff !important;
+    border-radius: 0;
+    transition: background-color 0.15s;
+    cursor: pointer;
+}
+
+.flatpickr-prev-month { left: 0; }
+.flatpickr-next-month { right: 0; }
+
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.flatpickr-prev-month svg,
+.flatpickr-next-month svg {
+    fill: #fff;
+    width: 16px;
+    height: 16px;
+}
+
+.flatpickr-prev-month:hover svg,
+.flatpickr-next-month:hover svg {
+    fill: #fff !important;
+    opacity: 0.8;
+}
+
+/* Hide prev/next when at min/max (JS toggles .fp-nav-hide-* on .flatpickr-calendar) */
+.flatpickr-calendar.fp-nav-hide-prev .flatpickr-prev-month,
+.flatpickr-calendar.fp-nav-hide-next .flatpickr-next-month {
+    display: none !important;
+    pointer-events: none;
+}
+
+/* Flat weekday band — grid aligns with day cells (no flex + margin:auto drift) */
+.flatpickr-weekdays {
+    background: #f1f5f9;
+    border-radius: 0;
+    padding: 8px 0 6px;
+}
+
+.flatpickr-weekdaycontainer {
+    border-radius: 0;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px 4px;
+    padding: 0 8px;
+    box-sizing: border-box;
+}
+
+span.flatpickr-weekday {
+    background: #f1f5f9;
+    color: var(--secondary-color, #1e5a99);
+    font-weight: 600;
+    border-radius: 0;
+    text-align: center;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Day grid — equal columns; circles centred (avoid margin:auto on flex children) */
+.flatpickr-days {
+    padding: 4px 0 8px;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+
+.flatpickr-days .dayContainer {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px 2px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    justify-items: center;
+    align-items: center;
+}
+
+.flatpickr-day {
+    width: 100%;
+    max-width: 38px;
+    height: 38px;
+    min-width: 0;
+    line-height: 1;
+    font-size: 0.9rem;
+    border-radius: 50%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: var(--secondary-color, #1e5a99);
+    border-color: var(--secondary-color, #1e5a99);
+    color: #fff;
+}
+
+/* Fix: today digit must stay white when it's also selected */
+.flatpickr-day.today.selected,
+.flatpickr-day.today.selected:hover {
+    background: var(--secondary-color, #1e5a99) !important;
+    border-color: var(--secondary-color, #1e5a99) !important;
+    color: #fff !important;
+}
+
+.flatpickr-day.today {
+    border-color: var(--primary-color, #4682b4);
+    color: var(--primary-color, #4682b4);
+    font-weight: 700;
+}
+
+.flatpickr-day.today:hover {
+    background: var(--secondary-color, #1e5a99);
+    border-color: var(--secondary-color, #1e5a99);
+    color: #fff;
+}
+
+.flatpickr-day:hover {
+    background: var(--secondary-color, #1e5a99);
+    border-color: var(--secondary-color, #1e5a99);
+    color: #fff;
+}
+
+.flatpickr-day.disabled,
+.flatpickr-day.disabled:hover,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #cbd5e1;
+    background: transparent;
+    border-color: transparent;
+}
+
+/* Hover / selected on prev & next month days — same dark blue as regular days */
+.flatpickr-day.prevMonthDay:hover,
+.flatpickr-day.nextMonthDay:hover,
+.flatpickr-day.prevMonthDay.selected,
+.flatpickr-day.nextMonthDay.selected,
+.flatpickr-day.prevMonthDay.selected:hover,
+.flatpickr-day.nextMonthDay.selected:hover {
+    background: var(--secondary-color, #1e5a99);
+    border-color: var(--secondary-color, #1e5a99);
+    color: #fff;
+}
+
+/* Available day tinted circle — booking calendar only (.fp-booking-cal class is added by JS in onReady) */
+.fp-booking-cal .flatpickr-day:not(.flatpickr-disabled):not(.prevMonthDay):not(.nextMonthDay):not(.selected):not(.startRange):not(.endRange) {
+    background: #eaf4fc !important;
+    border: 1.5px solid #b8d8ef !important;
+    color: var(--secondary-color, #1e5a99) !important;
+    font-weight: 600;
+}
+
+.fp-booking-cal .flatpickr-day:not(.flatpickr-disabled):not(.prevMonthDay):not(.nextMonthDay):not(.selected):not(.startRange):not(.endRange):hover {
+    background: var(--secondary-color, #1e5a99) !important;
+    border-color: var(--secondary-color, #1e5a99) !important;
+    color: #fff !important;
+}
+
+/* ── Личный кабинет ── */
+.cabinet-layout {
+    display: grid;
+    grid-template-columns: minmax(200px, 240px) 1fr;
+    gap: 2rem;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+    align-items: start;
+}
+
+.cabinet-nav {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(70, 130, 180, 0.07);
+    position: sticky;
+    top: 1.5rem;
+}
+
+.cabinet-nav__title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary-color, #4682b4);
+    margin: 0 0 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent-color, #e8f4fd);
+}
+
+.cabinet-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.cabinet-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+    color: #334155;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: background 0.15s, color 0.15s;
+}
+
+.cabinet-nav a:hover {
+    background: var(--accent-color, #e8f4fd);
+    color: var(--secondary-color, #1e5a99);
+}
+
+.cabinet-nav a.is-active {
+    background: var(--accent-color, #e8f4fd);
+    color: var(--secondary-color, #1e5a99);
+    font-weight: 600;
+}
+
+.cabinet-nav__logout {
+    margin: 1rem 0 0;
+    padding: 0;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 0.75rem;
+}
+
+.cabinet-nav__logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    text-align: center;
+}
+
+.cabinet-nav__logout-btn:hover {
+    background: rgba(220, 53, 69, 0.08);
+    color: var(--error-color, #dc3545);
+    border-color: var(--error-color, #dc3545);
+}
+
+/* ── Cabinet main content ── */
+.cabinet-main h1 {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 0.5rem;
+}
+
+.cabinet-main h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 0.75rem;
+}
+
+/* Компактные кнопки в кабинете */
+.cabinet-main .btn {
+    min-width: 0;
+    padding: 0.45rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 8px;
+    letter-spacing: normal;
+    gap: 0.35rem;
+}
+
+.cabinet-main .secondary-btn {
+    border-width: 1px;
+}
+
+.cabinet-main .primary-btn:hover {
+    transform: translateY(-1px);
+}
+
+.cabinet-main .secondary-btn:hover {
+    transform: translateY(-1px);
+}
+
+.cabinet-main .primary-btn:active,
+.cabinet-main .secondary-btn:active {
+    transform: translateY(0);
+}
+
+/* ── Uniform cabinet buttons — gradient hero style ── */
+.cabinet-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    min-width: 160px;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 10px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.25s, color 0.18s, box-shadow 0.25s, transform 0.15s;
+    border: 2px solid transparent;
+    white-space: nowrap;
+    box-sizing: border-box;
+    letter-spacing: 0.01em;
+}
+
+.cabinet-btn--primary {
+    background: linear-gradient(135deg, var(--primary-color, #4682b4) 0%, var(--secondary-color, #1e5a99) 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 18px rgba(var(--primary-color-rgb, 70, 130, 180), 0.32);
+}
+
+.cabinet-btn--primary:hover {
+    color: #fff;
+    box-shadow: 0 8px 28px rgba(var(--primary-color-rgb, 70, 130, 180), 0.42);
+    transform: translateY(-2px);
+}
+
+.cabinet-btn--ghost {
+    background: transparent;
+    color: var(--primary-color, #4682b4);
+    border-color: var(--primary-color, #4682b4);
+}
+
+.cabinet-btn--ghost:hover {
+    background: var(--accent-color, #e8f4fd);
+    color: var(--secondary-color, #1e5a99);
+    border-color: var(--secondary-color, #1e5a99);
+    transform: translateY(-1px);
+}
+
+.cabinet-btn--danger {
+    background: var(--error-color, #dc3545);
+    color: #fff;
+    border-color: var(--error-color, #dc3545);
+}
+
+.cabinet-btn--danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.cabinet-btn--sm {
+    min-height: 36px;
+    min-width: 0;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.85rem;
+}
+
+.cabinet-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.cabinet-actions--equal > .cabinet-btn {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+}
+
+/* Equal-width auto-sized buttons (not full-row stretch) */
+.cabinet-actions--compact-equal {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    width: fit-content;
+    max-width: 100%;
+    gap: 0.75rem;
+}
+
+/* Wrapper that constrains error message to the same width as the buttons */
+.booking-slot-actions-wrap {
+    display: flex;
+    flex-direction: column;
+    width: fit-content;
+    max-width: 100%;
+    gap: 0.75rem;
+}
+
+.booking-slot-actions-wrap #booking-client-errors {
+    width: 100%;
+    margin: 0;
+}
+
+/* ── Tabs ── */
+.cabinet-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid #e2e8f0;
+    flex-wrap: wrap;
+}
+
+.cabinet-tabs a {
+    display: inline-block;
+    padding: 0.55rem 1rem;
+    color: #64748b;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-size: 0.95rem;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.cabinet-tabs a:hover {
+    color: var(--primary-color, #4682b4);
+}
+
+.cabinet-tabs a.is-active {
+    color: var(--primary-color, #4682b4);
+    font-weight: 600;
+    border-bottom-color: var(--primary-color, #4682b4);
+}
+
+/* ── Cards ── */
+.cabinet-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.15s;
+}
+
+.cabinet-card:hover {
+    box-shadow: 0 4px 16px rgba(70, 130, 180, 0.1);
+}
+
+.cabinet-card--muted {
+    background: #f8fafc;
+    box-shadow: none;
+}
+
+.cabinet-card--muted:hover {
+    box-shadow: none;
+}
+
+.cabinet-card__actions {
+    margin: 1rem 0 0;
+}
+
+/* ── Appointment list card (fully clickable) ── */
+.cabinet-appt-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 1.1rem 1.4rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    text-decoration: none;
+    color: inherit;
+    margin-bottom: 0.85rem;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cabinet-appt-card:hover {
+    border-color: var(--primary-color, #4682b4);
+    box-shadow: 0 6px 20px rgba(70, 130, 180, 0.12);
+    transform: translateY(-1px);
+    color: inherit;
+}
+
+.cabinet-appt-card__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.cabinet-appt-card__date {
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 0.25rem;
+}
+
+.cabinet-appt-card__service {
+    color: #475569;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.cabinet-appt-card__doctor {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0.15rem 0 0;
+}
+
+.cabinet-appt-card__chev {
+    color: var(--primary-color, #4682b4);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+
+.cabinet-appt-card:hover .cabinet-appt-card__chev {
+    transform: translateX(3px);
+}
+
+/* Past / muted appointment card — no opacity change, only badge colour differs */
+
+/* ── Badges ── */
+.cabinet-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.cabinet-badge--warn {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.cabinet-badge--err {
+    background: rgba(220, 53, 69, 0.12);
+    color: var(--error-color, #dc3545);
+}
+
+.cabinet-badge--ok {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.cabinet-badge--info {
+    background: var(--accent-color, #e8f4fd);
+    color: var(--secondary-color, #1e5a99);
+}
+
+.cabinet-badge--muted {
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+/* ── Detail list (dl) in appointment detail ── */
+.cabinet-dl {
+    margin: 0;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.cabinet-dl dt {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.cabinet-dl dd {
+    margin: 0.2rem 0 0 0;
+    font-weight: 500;
+    color: #0f172a;
+}
+
+/* ── Section in cabinet ── */
+.cabinet-section {
+    margin-top: 1.75rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* ── Shared form inputs ── */
+.cabinet-input,
+.cabinet-select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    box-sizing: border-box;
+    background: #fff;
+    color: #0f172a;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.cabinet-input:focus,
+.cabinet-select:focus,
+.datepicker-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #4682b4);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb, 70, 130, 180), 0.18);
+}
+
+.cabinet-input:disabled,
+.cabinet-input[disabled] {
+    background: #f1f5f9;
+    color: #64748b;
+    border-color: #e2e8f0;
+}
+
+/* ── Phone input with locked +375 prefix ── */
+.phone-input-group {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.phone-input-group:focus-within {
+    border-color: var(--primary-color, #4682b4);
+    box-shadow: 0 0 0 3px rgba(70, 130, 180, 0.12);
+}
+
+.phone-input-prefix {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0.75rem 0.6rem 0.85rem;
+    background: var(--accent-color, #e8f4fd);
+    color: var(--secondary-color, #1e5a99);
+    font-weight: 700;
+    font-size: 1rem;
+    border-right: 1px solid #cbd5e1;
+    user-select: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.phone-input-digits {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.6rem 0.75rem;
+    font-size: 1rem;
+    font-family: inherit;
+    background: transparent;
+    min-width: 0;
+    letter-spacing: 0.03em;
+}
+
+/* Hidden real phone field */
+.phone-input-hidden {
+    display: none;
+}
+
+/* ── Date picker input ── */
+.datepicker-input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234682b4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E") no-repeat right 0.75rem center;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.datepicker-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #4682b4);
+    box-shadow: 0 0 0 3px rgba(70, 130, 180, 0.12);
+}
+
+/* ── Responsive ── */
+
+/* Tablet: ≤ 1024px — stack sidebar on top as horizontal pills */
+@media (max-width: 1024px) {
+    .cabinet-layout {
+        grid-template-columns: 1fr;
+        padding: 1.5rem 1rem 2.5rem;
+        gap: 1.25rem;
+    }
+
+    .cabinet-nav {
+        position: static;
+        border-radius: 12px;
+    }
+
+    .cabinet-nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .cabinet-nav ul li {
+        flex-shrink: 0;
+    }
+
+    .cabinet-nav a {
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.875rem;
+        border: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    .cabinet-nav a.is-active {
+        border-color: var(--primary-color, #4682b4);
+        background: var(--accent-color, #e8f4fd);
+        color: var(--secondary-color, #1e5a99);
+    }
+
+    .cabinet-nav__title {
+        margin-bottom: 0.65rem;
+    }
+
+    .cabinet-nav__logout {
+        margin-top: 0.75rem;
+        padding-top: 0.65rem;
+    }
+
+    .cabinet-nav__logout-btn {
+        width: auto;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.875rem;
+    }
+}
+
+/* Mobile: ≤ 640px */
+@media (max-width: 640px) {
+    .cabinet-layout {
+        padding: 1rem 0.75rem 2rem;
+        gap: 1rem;
+    }
+
+    .cabinet-main h1 {
+        font-size: 1.35rem;
+    }
+
+    .cabinet-btn {
+        min-width: 0;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .cabinet-actions {
+        flex-direction: column;
+    }
+
+    .cabinet-actions .cabinet-btn {
+        width: 100%;
+    }
+
+    .cabinet-card {
+        padding: 1rem 1.1rem;
+        border-radius: 12px;
+    }
+
+    .cabinet-appt-card {
+        padding: 0.9rem 1rem;
+        border-radius: 12px;
+    }
+
+    .booking-wizard {
+        padding: 1.5rem 0.75rem 3rem;
+    }
+
+    .booking-start-actions {
+        max-width: 100%;
+    }
+
+    .booking-slot-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-doctors-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Booking calendar legend ── */
+.booking-calendar-legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    font-size: 0.82rem;
+    color: #475569;
+}
+
+.booking-calendar-legend__item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.booking-calendar-legend__swatch {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.booking-calendar-legend__swatch--available {
+    background: #eaf4fc;
+    border: 1.5px solid #b8d8ef;
+}
+
+.booking-calendar-legend__swatch--unavailable {
+    background: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+}
+
+.booking-calendar-legend__swatch--selected {
+    background: var(--secondary-color, #1e5a99);
+    border: 1.5px solid var(--secondary-color, #1e5a99);
+}
+
+/* ── Booking summary ── */
+.booking-summary {
+    background: var(--accent-color, #e8f4fd);
+    border: 1px solid rgba(70, 130, 180, 0.2);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.booking-summary__row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    flex-wrap: wrap;
+}
+
+.booking-summary__label {
+    color: #64748b;
+    font-size: 0.85rem;
+    min-width: 110px;
+    flex-shrink: 0;
+}
+
+.booking-summary__value {
+    color: var(--secondary-color, #1e5a99);
+    font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════
+   Appointment detail page (cabinet/show)
+   ═══════════════════════════════════════════ */
+
+.appt-show-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--primary-color, #4682b4);
+    text-decoration: none;
+    margin-bottom: 1rem;
+    transition: color 0.15s;
+}
+
+.appt-show-back:hover {
+    color: var(--secondary-color, #1e5a99);
+}
+
+.appt-show-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.appt-show-title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.appt-show-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+}
+
+/* Дата/время — мягкий акцент, колонкой */
+.appt-show-datetime {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 1.25rem 1.5rem;
+    background: var(--accent-color, #e8f4fd);
+    border-bottom: 1px solid #d1e8f7;
+}
+
+.appt-show-datetime-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--primary-color, #4682b4);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.35rem;
+}
+
+.appt-show-datetime-date {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #334155;
+    line-height: 1.4;
+}
+
+.appt-show-datetime-time {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.appt-show-divider {
+    height: 1px;
+    background: #f1f5f9;
+}
+
+/* Поля деталей */
+.appt-show-dl {
+    margin: 0;
+    padding: 0.5rem 0;
+}
+
+.appt-show-dl-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.85rem 1.75rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.appt-show-dl-row:last-child {
+    border-bottom: none;
+}
+
+.appt-show-dl-row dt {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 130px;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.appt-show-dl-row dt i {
+    width: 14px;
+    text-align: center;
+    color: var(--primary-color, #4682b4);
+}
+
+.appt-show-dl-row dd {
+    margin: 0;
+    font-size: 0.975rem;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.5;
+}
+
+/* Кнопки действий — равная ширина */
+.appt-show-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.appt-show-btn {
+    flex: 1;
+    min-width: 0;
+}
+
+.appt-show-btn.cabinet-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Инфо-алерт */
+.booking-alert--info {
+    background: var(--accent-color, #e8f4fd);
+    color: var(--secondary-color, #1e5a99);
+    border-color: rgba(70, 130, 180, 0.3);
+}
+
+@media (max-width: 600px) {
+    .appt-show-datetime {
+        padding: 1.25rem;
+        gap: 1rem;
+    }
+
+    .appt-show-datetime-time {
+        font-size: 1.6rem;
+    }
+
+    .appt-show-dl-row {
+        flex-direction: column;
+        gap: 0.2rem;
+        padding: 0.85rem 1.25rem;
+    }
+
+    .appt-show-dl-row dt {
+        min-width: 0;
+    }
+
+    .appt-show-actions {
+        flex-direction: column;
+    }
+
+    .appt-show-btn {
+        width: 100%;
+    }
+}

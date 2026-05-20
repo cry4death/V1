@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/biometric/biometric_auth_service.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/storage/providers.dart';
 import '../../core/widgets/clinic_logo.dart';
 import '../auth/presentation/controllers/auth_controller.dart';
 
@@ -35,8 +38,10 @@ class _LoginFaceIdScreenState extends ConsumerState<LoginFaceIdScreen>
       duration: const Duration(milliseconds: 1600),
     );
     ref.read(authControllerProvider.notifier).bootstrap();
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (mounted) _triggerScan();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) _triggerScan();
+      });
     });
   }
 
@@ -47,22 +52,43 @@ class _LoginFaceIdScreenState extends ConsumerState<LoginFaceIdScreen>
     super.dispose();
   }
 
-  void _triggerScan() {
-    if (_status == _ScanStatus.scanning) return;
+  Future<void> _triggerScan() async {
+    if (_status == _ScanStatus.scanning || _status == _ScanStatus.success) {
+      return;
+    }
+
     setState(() => _status = _ScanStatus.scanning);
     _scanLineCtrl.repeat();
     _pulseCtrl.repeat();
 
-    Future.delayed(const Duration(milliseconds: 2000), () {
+    try {
+      final biometric = ref.read(biometricAuthServiceProvider);
+      final ok = await biometric.authenticate(
+        localizedReason: 'Подтвердите личность для входа в приложение',
+      );
       if (!mounted) return;
-      _scanLineCtrl.stop();
-      _pulseCtrl.stop();
-      setState(() => _status = _ScanStatus.success);
-      ref.read(authControllerProvider.notifier).markAuthenticated();
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        if (mounted) context.go('/dashboard');
-      });
-    });
+
+      if (ok) {
+        setState(() => _status = _ScanStatus.success);
+        ref.read(authControllerProvider.notifier).markAuthenticated();
+        Future.delayed(const Duration(milliseconds: 1000), () {
+          if (mounted) context.go('/dashboard');
+        });
+      } else {
+        setState(() => _status = _ScanStatus.failed);
+      }
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(biometricPlatformErrorMessage(e))),
+      );
+      setState(() => _status = _ScanStatus.failed);
+    } finally {
+      if (mounted) {
+        _scanLineCtrl.stop();
+        _pulseCtrl.stop();
+      }
+    }
   }
 
   @override
@@ -275,7 +301,7 @@ class _LoginFaceIdScreenState extends ConsumerState<LoginFaceIdScreen>
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Биометрические данные хранятся только на вашем устройстве',
+                        'Биометрия обрабатывается системой телефона. На многих Android в приложениях доступен только отпечаток, а «лицо» остаётся для разблокировки экрана — это нормально. Данные не отправляются на сервер.',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: const Color(0xFF1E5A99),

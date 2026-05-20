@@ -193,3 +193,18 @@ function initPhoneMask(input, options) {
         );
     });
 }
+
+/**
+ * URL старта онлайн-записи: сначала data-booking-url с body (серверный route), затем fallback.
+ */
+function getBookingStartUrl() {
+    var body = document.body;
+    var fromData = body && body.getAttribute('data-booking-url');
+    if (fromData) {
+        return fromData;
+    }
+    if (typeof window.BOOKING_INDEX_URL === 'string' && window.BOOKING_INDEX_URL) {
+        return window.BOOKING_INDEX_URL;
+    }
+    return '/booking';
+}

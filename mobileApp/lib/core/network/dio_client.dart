@@ -14,18 +14,26 @@ import 'api_exception.dart';
 /// - Телефон в Wi‑Fi → IP ПК в той же сети (`ipconfig`, IPv4 адаптера).
 /// - USB: `adb reverse tcp:8000 tcp:8000` и тогда `http://127.0.0.1:8000/api/v1`.
 ///
-/// Переопределение: `flutter run --dart-define=API_BASE_URL=http://.../api/v1`
-const String kApiBaseUrl = String.fromEnvironment(
+/// Переопределение: `--dart-define=API_BASE=...` или `API_BASE_URL=...`.
+/// Значение должно включать суффикс `/api/v1` (как на сервере Laravel).
+const String kApiBaseFromDefine = String.fromEnvironment('API_BASE');
+const String kApiBaseUrlFromEnv = String.fromEnvironment(
   'API_BASE_URL',
   defaultValue: 'http://10.0.2.2:8000/api/v1',
 );
+
+/// Итоговая база: приоритет `API_BASE`, иначе `API_BASE_URL`/дефолт; без хвостового `/`.
+String get resolvedApiBaseUrl {
+  final raw = kApiBaseFromDefine.isNotEmpty ? kApiBaseFromDefine : kApiBaseUrlFromEnv;
+  return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
+}
 
 final dioProvider = Provider<Dio>((ref) {
   final secure = ref.watch(secureStorageProvider);
 
   final dio = Dio(
     BaseOptions(
-      baseUrl: kApiBaseUrl,
+      baseUrl: resolvedApiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 20),
       sendTimeout: const Duration(seconds: 20),
@@ -87,8 +95,17 @@ class _ErrorInterceptor extends Interceptor {
 
   String _extractMessage(DioException err) {
     final data = err.response?.data;
-    if (data is Map && data['message'] is String) {
-      return data['message'] as String;
+    if (data is Map) {
+      if (data['message'] is String) {
+        return data['message'] as String;
+      }
+      final errors = data['errors'];
+      if (errors is Map && errors.isNotEmpty) {
+        final first = errors.values.first;
+        if (first is List && first.isNotEmpty && first.first is String) {
+          return first.first as String;
+        }
+      }
     }
     return err.message ?? 'Network error';
   }

@@ -8,13 +8,13 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ asset('styles/styles.css') }}?v=11">
-    <link rel="stylesheet" href="{{ asset('styles/style-medical-services-page.css') }}?v=4">
-    <link rel="stylesheet" href="{{ asset('styles/style-our-doctors-page.css') }}?v=5">
-    <link rel="stylesheet" href="{{ asset('styles/promotions-slider.css') }}?v=4">
+    <link rel="stylesheet" href="{{ asset('styles/styles.css') }}?v=12">
+    <link rel="stylesheet" href="{{ asset('styles/style-medical-services-page.css') }}?v=6">
+    <link rel="stylesheet" href="{{ asset('styles/style-our-doctors-page.css') }}?v=6">
+    <link rel="stylesheet" href="{{ asset('styles/promotions-slider.css') }}?v=6">
     @stack('styles')
 </head>
-<body class="@yield('body_class')">
+<body class="@yield('body_class')" data-booking-url="{{ route('booking.start') }}">
     @include('partials.header')
 
     @yield('content')
@@ -40,8 +40,9 @@
         </div>
     </div>
 
-    <script src="{{ asset('scripts/shared-utils.js') }}?v=6"></script>
-    <script src="{{ asset('scripts/script.js') }}?v=10"></script>
+    <script>window.BOOKING_INDEX_URL = @json(route('booking.start'));</script>
+    <script src="{{ asset('scripts/shared-utils.js') }}?v=7"></script>
+    <script src="{{ asset('scripts/script.js') }}?v=14"></script>
     @stack('scripts')
 </body>
 </html>

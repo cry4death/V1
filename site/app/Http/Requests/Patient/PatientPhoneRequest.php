@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests\Patient;
 
+use App\Http\Requests\Api\Auth\Concerns\NormalizesPatientPhone;
 use App\Support\PatientPhone;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PatientPhoneRequest extends FormRequest
 {
+    use NormalizesPatientPhone;
+
     public function authorize(): bool
     {
         return true;
@@ -18,15 +21,34 @@ class PatientPhoneRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => PatientPhone::rules(),
+            'phone' => PatientPhone::belarusMobileRules(),
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $raw = $this->input('phone');
-        if (is_string($raw)) {
-            $this->merge(['phone' => PatientPhone::normalize($raw)]);
-        }
+        $this->merge([
+            'phone' => $this->normalizePatientPhoneInput($this->input('phone')),
+        ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'phone' => 'телефон',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'phone.regex' => 'Укажите белорусский номер: 375 и девять цифр (можно без префикса 375 — только 9 цифр номера).',
+        ];
     }
 }

@@ -133,7 +133,7 @@ function initContactForm() {
     const contactForm = document.querySelector('.contact-form');
     
     if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
+        contactForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const formData = {
                 name: document.getElementById('name').value,
@@ -142,9 +142,43 @@ function initContactForm() {
                 message: document.getElementById('message').value,
                 privacy: document.getElementById('privacy').checked
             };
-            if (validateContactForm(formData)) {
-                showContactFormSuccess();
-                contactForm.reset();
+            if (!validateContactForm(formData)) return;
+
+            const submitBtn = contactForm.querySelector('[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+                || contactForm.querySelector('input[name="_token"]')?.value;
+
+            try {
+                const response = await fetch(contactForm.action && contactForm.action !== '#' ? contactForm.action : '/contacts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken || '',
+                    },
+                    body: JSON.stringify({
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone,
+                        message: formData.message,
+                    }),
+                });
+
+                if (response.ok) {
+                    showContactFormSuccess();
+                    contactForm.reset();
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    console.error('Ошибка отправки:', data);
+                    alert('Не удалось отправить сообщение. Попробуйте позже.');
+                }
+            } catch (err) {
+                console.error('Ошибка сети:', err);
+                alert('Не удалось отправить сообщение. Проверьте соединение.');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
         });
         const phoneInput = document.getElementById('phone');

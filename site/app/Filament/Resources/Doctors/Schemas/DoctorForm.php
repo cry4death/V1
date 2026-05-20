@@ -155,6 +155,11 @@ class DoctorForm
                     ->afterStateUpdated(fn (Set $set) => $set('slug_locked', true))
                     ->helperText('Автоматически формируется из ФИО. Если изменить вручную — фиксируется.'),
 
+                TextInput::make('espo_assigned_user_id')
+                    ->label('Espo: ID пользователя (ответственный за встречи)')
+                    ->maxLength(64)
+                    ->helperText('В EspoCRM: Пользователи → карточка врача → скопировать ID из URL. Если пусто — используется ESPO_DEFAULT_ASSIGNED_USER_ID из .env.'),
+
                 Select::make('category')
                     ->label('Категория')
                     ->options([

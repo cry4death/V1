@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../widgets/doctor_grid_card.dart';
@@ -683,7 +684,7 @@ class _ServiceListCard extends StatelessWidget {
 
 // ─── Service detail (всё в одном скролле, без sticky header) ───────────────────
 
-class _ServiceDetailPage extends StatelessWidget {
+class _ServiceDetailPage extends ConsumerWidget {
   final ServiceCategory category;
   final ServiceOffer offer;
   final VoidCallback onBack;
@@ -701,7 +702,7 @@ class _ServiceDetailPage extends StatelessWidget {
       'Перед процедурой уточните у администратора или лечащего врача индивидуальные рекомендации по подготовке и перечень необходимых анализов.';
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final about = offer.longAbout ?? offer.desc;
     final indications = offer.indications ?? _kDefaultIndications;
     final preparation = offer.preparation ?? _kDefaultPreparation;
@@ -801,7 +802,8 @@ class _ServiceDetailPage extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16)),
                           ),
-                          onPressed: () {},
+                          onPressed: () =>
+                              context.push('/booking?service=${offer.slug}'),
                           child: Text(
                             'Записаться на приём',
                             style: GoogleFonts.inter(
@@ -900,65 +902,98 @@ class _ServiceDetailPage extends StatelessWidget {
                 ),
               ),
 
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Врачи',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF222222),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Специалисты, оказывающие услуги в клинике',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: const Color(0xFF717784),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 0.56,
-                      ),
-                      itemCount: serviceDoctorsSnapshots.length,
-                      itemBuilder: (_, i) {
-                        final d = serviceDoctorsSnapshots[i];
-                        return DoctorGridCard(
-                          lastName: d.lastName,
-                          firstName: d.firstName,
-                          patronymic: d.patronymic,
-                          specialty: d.specialty,
-                          experienceYears: d.experienceYears,
-                          gradeName: d.gradeName,
-                          rating: d.rating,
-                          photoUrl: d.photoUrl,
-                          onTap: () {},
-                          onBook: () {},
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
+              _ServiceDoctorsSection(serviceSlug: offer.slug),
 
               SizedBox(height: bottomPad),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── Service Doctors Section ─────────────────────────────────────────────────
+
+class _ServiceDoctorsSection extends ConsumerWidget {
+  final String serviceSlug;
+  const _ServiceDoctorsSection({required this.serviceSlug});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(serviceDoctorsProvider(serviceSlug));
+
+    return async.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (doctors) {
+        if (doctors.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Врачи',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF222222),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Специалисты, оказывающие данную услугу',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: const Color(0xFF717784),
+                ),
+              ),
+              const SizedBox(height: 12),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.62,
+                ),
+                itemCount: doctors.length,
+                itemBuilder: (_, i) {
+                  final d = doctors[i];
+                    return DoctorGridCard(
+                    lastName: d.lastName,
+                    firstName: d.firstName,
+                    patronymic: d.middleName,
+                    specialty: d.specialty,
+                    rating: d.rating,
+                    photoUrl: d.photoUrl ?? '',
+                    onTap: () {},
+                    onBook: () => context.push(
+                      '/booking?service=$serviceSlug&doctor=${d.slug}',
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

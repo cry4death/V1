@@ -14,6 +14,7 @@ import '../features/login/login_pin.dart';
 import '../features/login/login_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/registration/registration_screen.dart';
+import '../features/booking/presentation/booking_screen.dart';
 import '../features/splash/splash_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -21,11 +22,49 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
-    initialLocation: '/dashboard',
+    initialLocation: '/splash',
     refreshListenable: refresh,
-    // DEV: авторизация временно отключена — любой маршрут доступен,
-    // чтобы работать с бэкендом врачей. Вернуть guard перед релизом.
-    redirect: (context, state) => null,
+    redirect: (context, state) {
+      final auth = ref.read(authControllerProvider);
+      final status = auth.status;
+      final loc = state.matchedLocation;
+
+      // Пока статус не определён — держим на splash
+      if (status == AuthStatus.unknown) {
+        return loc == '/splash' ? null : '/splash';
+      }
+
+      // Публичные маршруты (аутентификация, онбординг)
+      const publicRoutes = ['/splash', '/onboarding', '/auth', '/register',
+          '/login', '/login/pin', '/login/faceid'];
+      final isPublic = publicRoutes.any((r) => loc.startsWith(r));
+
+      // Не зарегистрирован → онбординг / auth
+      if (status == AuthStatus.unregistered) {
+        return isPublic ? null : '/auth';
+      }
+
+      // Зарегистрирован, но не прошёл PIN/Face ID.
+      // /login разрешён: пользователь может нажать «Войти по номеру» на экране PIN.
+      // /register разрешён: чтобы PIN/FaceID-setup в конце регистрации не прерывался.
+      if (status == AuthStatus.registeredLoggedOut) {
+        if (loc == '/login' ||
+            loc == '/login/pin' ||
+            loc == '/login/faceid' ||
+            loc.startsWith('/register')) {
+          return null;
+        }
+        // Любой другой маршрут (в т.ч. /splash) → ведём на нужный экран входа.
+        return auth.faceIdEnabled ? '/login/faceid' : '/login/pin';
+      }
+
+      // Полностью авторизован — не пускаем обратно на авторизацию
+      if (status == AuthStatus.authenticated && isPublic) {
+        return '/dashboard';
+      }
+
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/splash',
@@ -84,6 +123,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           PromotionDetailScreen(slug: state.pathParameters['slug'] ?? ''),
         ),
       ),
+      GoRoute(
+        path: '/booking',
+        pageBuilder: (context, state) {
+          final doctor = state.uri.queryParameters['doctor'];
+          final service = state.uri.queryParameters['service'];
+          final aptIdRaw = state.uri.queryParameters['appointmentId'];
+          final appointmentId =
+              aptIdRaw != null ? int.tryParse(aptIdRaw) : null;
+          return _buildPageSlide(
+            state,
+            BookingScreen(
+              doctorSlug: doctor?.isNotEmpty == true ? doctor : null,
+              serviceSlug: service?.isNotEmpty == true ? service : null,
+              appointmentId: appointmentId,
+            ),
+          );
+        },
+      ),
     ],
   );
 });
@@ -123,5 +180,30 @@ CustomTransitionPage<void> _buildPage(
       return FadeTransition(opacity: animation, child: child);
     },
     transitionDuration: const Duration(milliseconds: 280),
+  );
+}
+
+/// Slide-up transition for full-screen modal flows (e.g. booking wizard).
+CustomTransitionPage<void> _buildPageSlide(
+  GoRouterState state,
+  Widget child,
+) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 1),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      );
+    },
+    transitionDuration: const Duration(milliseconds: 320),
   );
 }

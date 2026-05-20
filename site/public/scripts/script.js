@@ -270,29 +270,8 @@ function initializeMobileMenu() {
             this.classList.toggle('active');
             this.setAttribute('aria-expanded', mobileMenu.classList.contains('show-mobile') ? 'true' : 'false');
             
-            // «Записаться» в мобильном меню (поиск только в шапке — см. .header-mobile-actions)
             if (mobileMenu.classList.contains('show-mobile')) {
                 closeAllNavSubmenus(null);
-                if (!mobileMenu.querySelector('.header-buttons.mobile-buttons')) {
-                    const navEl = mobileMenu.querySelector('nav');
-                    const extrasEl = mobileMenu.querySelector('.nav-mobile-extras');
-                    const mobileButtonsContainer = document.createElement('div');
-                    mobileButtonsContainer.className = 'header-buttons mobile-buttons';
-                    const mobileAppointmentBtn = document.createElement('a');
-                    mobileAppointmentBtn.href = '#appointment';
-                    mobileAppointmentBtn.className = 'btn appointment-btn';
-                    mobileAppointmentBtn.innerHTML =
-                        '<i class="fa-regular fa-calendar-check" aria-hidden="true"></i> Записаться';
-                    mobileButtonsContainer.appendChild(mobileAppointmentBtn);
-                    // После всех пунктов меню, перед блоком контактов (как в макете)
-                    if (extrasEl) {
-                        mobileMenu.insertBefore(mobileButtonsContainer, extrasEl);
-                    } else if (navEl) {
-                        navEl.insertAdjacentElement('afterend', mobileButtonsContainer);
-                    } else {
-                        mobileMenu.appendChild(mobileButtonsContainer);
-                    }
-                }
                 requestAnimationFrame(function () {
                     syncAllMobileNavSubmenuHeights();
                 });
@@ -302,7 +281,7 @@ function initializeMobileMenu() {
         });
     }
     window.addEventListener('resize', function() {
-        if (window.innerWidth > 992 && mobileMenu && mobileMenu.classList.contains('show-mobile')) {
+        if (window.innerWidth >= 1200 && mobileMenu && mobileMenu.classList.contains('show-mobile')) {
             mobileMenu.classList.remove('show-mobile');
             closeAllNavSubmenus(null);
             if (mobileMenuBtn) {
@@ -583,7 +562,10 @@ const consultationForm = document.querySelector('.consultation-form');
 const phoneInput = document.getElementById('phone');
 
 if (phoneInput) {
-    initPhoneMask(phoneInput, { countryCode: '7' });
+    var useBelarusPhoneMask =
+        document.body.classList.contains('patient-auth-page') ||
+        phoneInput.getAttribute('data-phone-mask') === '375';
+    initPhoneMask(phoneInput, { countryCode: useBelarusPhoneMask ? '375' : '7' });
 }
 
 if (consultationForm) {
@@ -691,7 +673,7 @@ function createMap() {
         balloonContent: '<strong>Медицинская клиника</strong><br>' +
                         'г. Москва, ул. Медицинская, д. 123<br>' +
                         'Телефон: +7 (495) 123-45-67<br>' +
-                        '<a href="#appointment">Записаться на прием</a>'
+                        '<a href="' + (typeof getBookingStartUrl === 'function' ? getBookingStartUrl() : ((typeof window.BOOKING_INDEX_URL === 'string' && window.BOOKING_INDEX_URL) || '/booking')) + '">Записаться на прием</a>'
     }, {
         preset: 'islands#redMedicalIcon', // Using a predefined medical icon
         iconColor: '#4682b4',

@@ -3,6 +3,7 @@ import 'dart:math' show min;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -24,7 +25,6 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
   String _specialty = 'Все специализации';
   String _grade = 'Все категории';
   String _ageGroup = 'Все возрасты';
-  String? _selectedSlug;
 
   List<DoctorModel> _filterDoctors(List<DoctorModel> doctors) {
     final q = _query.toLowerCase();
@@ -61,10 +61,11 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
     ref.listen<String?>(doctorsPendingSlugProvider, (prev, next) {
       if (next == null || next.isEmpty) return;
       if (!mounted) return;
-      setState(() => _selectedSlug = next);
+      ref.read(doctorsSubNavProvider.notifier).openDoctor(next);
       ref.read(doctorsPendingSlugProvider.notifier).state = null;
     });
 
+    final selectedSlug = ref.watch(doctorsSubNavProvider);
     final async = ref.watch(doctorsListProvider);
 
     return async.when(
@@ -135,7 +136,7 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
               child: child,
             );
           },
-          child: _selectedSlug == null
+          child: selectedSlug == null
               ? _ListScreen(
                   key: const ValueKey('list'),
                   searchCtrl: _searchCtrl,
@@ -153,12 +154,13 @@ class _DoctorsScreenState extends ConsumerState<DoctorsScreen> {
                     ref.invalidate(doctorsListProvider);
                     await ref.read(doctorsListProvider.future);
                   },
-                  onSelect: (d) => setState(() => _selectedSlug = d.slug),
+                  onSelect: (d) =>
+                      ref.read(doctorsSubNavProvider.notifier).openDoctor(d.slug),
                 )
               : _DetailScreen(
                   key: const ValueKey('detail'),
-                  slug: _selectedSlug!,
-                  onBack: () => setState(() => _selectedSlug = null),
+                  slug: selectedSlug,
+                  onBack: () => ref.read(doctorsSubNavProvider.notifier).close(),
                 ),
         );
       },
@@ -625,7 +627,7 @@ class _DoctorCard extends StatelessWidget {
                       ),
 
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -722,11 +724,11 @@ class _DoctorCard extends StatelessWidget {
                             const SizedBox(height: 8),
                             SizedBox(
                               width: double.infinity,
-                              height: 34,
+                              height: 32,
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
                                   gradient: AppColors.primaryGradient,
-                                  borderRadius: BorderRadius.circular(17),
+                                  borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
                                       color: AppColors.primary.withAlpha(77),
@@ -739,10 +741,12 @@ class _DoctorCard extends StatelessWidget {
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(17),
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
                                   ),
-                                  onPressed: () {},
+                                  onPressed: () => context.push(
+                                    '/booking?doctor=${doctor.slug}',
+                                  ),
                                   child: Text(
                                     'Записаться',
                                     style: GoogleFonts.inter(
@@ -1108,7 +1112,9 @@ class _DetailScreenState extends ConsumerState<_DetailScreen>
                                             ),
                                           ),
                                         ),
-                                        onPressed: () {},
+                                        onPressed: () => context.push(
+                                          '/booking?doctor=${widget.slug}',
+                                        ),
                                         child: Text(
                                           'Записаться',
                                           style: GoogleFonts.inter(

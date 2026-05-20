@@ -11,29 +11,34 @@ class ServiceController extends Controller
     public function index()
     {
         $directions = Direction::active()
-            ->with(['services' => fn ($q) => $q->active()->orderBy('sort_order')])
-            ->orderBy('sort_order')
+            ->with(['services' => fn ($q) => $q->active()->orderBy('name')])
+            ->orderBy('name')
             ->get();
 
-        // Группируем врачей по направлениям (через services.direction_id)
-        $directionDoctors = collect();
-        $doctors = Doctor::active()
+        return view('services.index', compact('directions'));
+    }
+
+    public function direction(string $slug)
+    {
+        $activeDirection = Direction::active()
+            ->with(['services' => fn ($q) => $q->active()->orderBy('name')])
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        $allDirections = Direction::active()
+            ->orderBy('name')
+            ->get();
+
+        $directionDoctors = Doctor::active()
             ->with(['specialization', 'services:id,direction_id'])
+            ->whereHas('services', fn ($q) => $q->where('direction_id', $activeDirection->id))
             ->orderBy('sort_order')
-            ->get();
+            ->get()
+            ->unique('id')
+            ->values()
+            ->take(6);
 
-        foreach ($doctors as $doctor) {
-            $dirIds = $doctor->services->pluck('direction_id')->unique();
-            foreach ($dirIds as $dirId) {
-                $directionDoctors[$dirId] = ($directionDoctors[$dirId] ?? collect())->push($doctor);
-            }
-        }
-
-        foreach ($directionDoctors as $k => $list) {
-            $directionDoctors[$k] = $list->unique('id')->values()->take(6);
-        }
-
-        return view('services.index', compact('directions', 'directionDoctors'));
+        return view('services.direction', compact('activeDirection', 'allDirections', 'directionDoctors'));
     }
 
     public function show(string $slug)

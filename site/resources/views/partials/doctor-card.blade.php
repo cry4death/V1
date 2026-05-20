@@ -5,6 +5,7 @@
         'children' => 'children',
         default => 'all',
     };
+    $bookingBtnHref = $doctorBookingUrl ?? route('booking.start', ['from' => 'doctor:'.$doctor->slug]);
 @endphp
 <article class="doctor-card animate-on-scroll"
          data-specialization="{{ $specName }}"
@@ -28,6 +29,6 @@
         </h3>
         <p class="doctor-row"><span class="doctor-label">Стаж работы:</span> <span class="doctor-experience-value">{{ $doctor->experience_years }} лет</span></p>
         <p class="doctor-row"><span class="doctor-label">Категория:</span> <span class="doctor-category-value">{{ $doctor->category_label }}</span></p>
-        <a href="{{ route('contacts') }}" class="doctor-btn">Записаться</a>
+        <a href="{{ $bookingBtnHref }}" class="doctor-btn">Записаться</a>
     </div>
 </article>

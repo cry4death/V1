@@ -208,5 +208,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('scripts/script-about-clinic-page.js') }}?v=2"></script>
+    <script src="{{ asset('scripts/script-about-clinic-page.js') }}?v=6"></script>
 @endpush

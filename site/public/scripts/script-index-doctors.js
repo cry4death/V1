@@ -16,6 +16,20 @@
     return div.innerHTML;
   }
 
+  function bookingHrefForDoctor(item) {
+    if (item.bookingUrl) {
+      return item.bookingUrl;
+    }
+    var base = (document.body && document.body.getAttribute('data-booking-url')) ||
+      (typeof window.BOOKING_INDEX_URL === 'string' && window.BOOKING_INDEX_URL) ||
+      '/booking';
+    if (item.slug) {
+      var sep = base.indexOf('?') >= 0 ? '&' : '?';
+      return base + sep + 'from=' + encodeURIComponent('doctor:' + item.slug);
+    }
+    return base;
+  }
+
   function buildDoctorCard(item) {
     var nameParts = (item.fullName || '').trim().split(/\s+/);
     var nameHtml = nameParts.length > 1
@@ -35,7 +49,7 @@
         '<h3 class="doctor-name">' + nameHtml + '</h3>' +
         '<p class="doctor-row"><span class="doctor-label">Стаж работы:</span> <span class="doctor-experience-value">' + escapeHtml(expText) + '</span></p>' +
         '<p class="doctor-row"><span class="doctor-label">Категория:</span> <span class="doctor-category-value">' + escapeHtml(item.category || '') + '</span></p>' +
-        '<a href="contacts-page.html" class="doctor-btn">Записаться</a>' +
+        '<a href="' + escapeHtml(bookingHrefForDoctor(item)) + '" class="doctor-btn">Записаться</a>' +
       '</div>';
     return card;
   }

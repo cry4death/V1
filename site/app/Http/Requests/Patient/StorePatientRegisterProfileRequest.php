@@ -26,6 +26,27 @@ class StorePatientRegisterProfileRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'last_name.required' => 'Поле «Фамилия» обязательно для заполнения.',
+            'last_name.max' => 'Фамилия не должна превышать 120 символов.',
+            'last_name.regex' => 'Фамилия должна содержать только кириллические буквы, пробелы и дефисы.',
+            'first_name.required' => 'Поле «Имя» обязательно для заполнения.',
+            'first_name.max' => 'Имя не должно превышать 120 символов.',
+            'first_name.regex' => 'Имя должно содержать только кириллические буквы, пробелы и дефисы.',
+            'middle_name.max' => 'Отчество не должно превышать 120 символов.',
+            'middle_name.regex' => 'Отчество должно содержать только кириллические буквы, пробелы и дефисы.',
+            'birth_date.required' => 'Укажите дату рождения.',
+            'birth_date.regex' => 'Введите дату рождения в формате ДД.ММ.ГГГГ.',
+            'gender.required' => 'Укажите пол.',
+            'gender.in' => 'Выберите пол из предложенных вариантов.',
+        ];
+    }
+
     public function withValidator($validator): void
     {
         $validator->after(function ($v) {

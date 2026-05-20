@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import 'appointments/appointments_screen.dart';
 import 'dashboard_tab_provider.dart';
+import 'doctors/doctors_providers.dart';
 import 'doctors/doctors_screen.dart';
 import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
@@ -39,7 +40,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       canPop: false,
       onPopInvokedWithResult: (bool didPop, Object? result) {
         if (didPop) return;
-        if (ref.read(dashboardTabIndexProvider) == 2 &&
+        final tab = ref.read(dashboardTabIndexProvider);
+        // Tab 1 — Doctors: close detail if open.
+        if (tab == 1 &&
+            ref.read(doctorsSubNavProvider.notifier).popOneStep()) {
+          return;
+        }
+        // Tab 2 — Services: pop category/service levels.
+        if (tab == 2 &&
             ref.read(servicesSubNavProvider.notifier).popOneStep()) {
           return;
         }

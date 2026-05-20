@@ -1,12 +1,17 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/widgets/primary_button.dart';
 
-class LoginPhoneScreen extends StatefulWidget {
+import '../../core/constants/app_colors.dart';
+import '../../core/network/api_exception.dart';
+import '../../core/widgets/primary_button.dart';
+import '../auth/data/patient_auth_providers.dart';
+
+class LoginPhoneScreen extends ConsumerStatefulWidget {
   final String phone;
   final ValueChanged<String> onNext;
 
@@ -17,13 +22,16 @@ class LoginPhoneScreen extends StatefulWidget {
   });
 
   @override
-  State<LoginPhoneScreen> createState() => _LoginPhoneScreenState();
+  ConsumerState<LoginPhoneScreen> createState() => _LoginPhoneScreenState();
 }
 
-class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
+class _LoginPhoneScreenState extends ConsumerState<LoginPhoneScreen> {
   late final TextEditingController _ctrl;
   bool _touched = false;
   String _phone = '';
+  bool _loading = false;
+  String? _phoneApiMessage;
+  bool _showRegisterCta = false;
 
   bool get _isValid => _phone.length == 9;
 
@@ -38,6 +46,44 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
   void dispose() {
     _ctrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _requestOtp() async {
+    setState(() => _touched = true);
+    if (!_isValid || _loading) return;
+
+    setState(() {
+      _loading = true;
+      _phoneApiMessage = null;
+      _showRegisterCta = false;
+    });
+    try {
+      await ref.read(patientAuthRepositoryProvider).requestLoginOtp(
+            phone: '375$_phone',
+          );
+      if (!mounted) return;
+      widget.onNext(_phone);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      if (e.response?.statusCode == 422) {
+        final regMsg = _firstPhoneValidationMessage(e);
+        if (regMsg != null) {
+          setState(() {
+            _phoneApiMessage = regMsg;
+            _showRegisterCta = regMsg == 'Номер не найден';
+          });
+          return;
+        }
+      }
+      final msg = e.error is ApiException
+          ? (e.error! as ApiException).message
+          : (e.message ?? 'Ошибка сети');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -177,6 +223,8 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                                     setState(() {
                                       _phone = v;
                                       _touched = true;
+                                      _phoneApiMessage = null;
+                                      _showRegisterCta = false;
                                     });
                                   },
                                 ),
@@ -213,6 +261,32 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
                             color: const Color(0xFFA1A8B0),
                           ),
                         ),
+                        if (_phoneApiMessage != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            _phoneApiMessage!,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppColors.error,
+                              height: 1.4,
+                            ),
+                          ),
+                          if (_showRegisterCta)
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton(
+                                onPressed: () => context.go('/register'),
+                                child: Text(
+                                  'Зарегистрироваться',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ],
                     ).animate().fadeIn(delay: 100.ms),
 
@@ -257,12 +331,9 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
               padding:
                   const EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: PrimaryButton(
-                label: 'Получить код',
-                isEnabled: _isValid,
-                onTap: () {
-                  setState(() => _touched = true);
-                  if (_isValid) widget.onNext(_phone);
-                },
+                label: _loading ? 'Отправка…' : 'Получить код',
+                isEnabled: _isValid && !_loading,
+                onTap: _requestOtp,
               ),
             ),
           ],
@@ -270,4 +341,16 @@ class _LoginPhoneScreenState extends State<LoginPhoneScreen> {
       ),
     );
   }
+}
+
+String? _firstPhoneValidationMessage(DioException e) {
+  final data = e.response?.data;
+  if (data is! Map) return null;
+  final errors = data['errors'];
+  if (errors is! Map) return null;
+  final phoneErr = errors['phone'];
+  if (phoneErr is List && phoneErr.isNotEmpty && phoneErr.first is String) {
+    return phoneErr.first as String;
+  }
+  return null;
 }

@@ -10,14 +10,15 @@
     <link rel="stylesheet" href="{{ asset('styles/styles.css') }}">
     <link rel="stylesheet" href="{{ asset('styles/style-error-page.css') }}">
 </head>
-<body class="error-page-view">
+<body class="error-page-view" data-booking-url="{{ route('booking.start') }}">
     @include('partials.header')
 
     @yield('content')
 
     @include('partials.footer')
 
-    <script src="{{ asset('scripts/shared-utils.js') }}"></script>
-    <script src="{{ asset('scripts/script.js') }}"></script>
+    <script>window.BOOKING_INDEX_URL = @json(route('booking.start'));</script>
+    <script src="{{ asset('scripts/shared-utils.js') }}?v=7"></script>
+    <script src="{{ asset('scripts/script.js') }}?v=12"></script>
 </body>
 </html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Архитектура — Маяк Здоровья</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #dde4ed;
+  padding: 32px 20px 48px;
+  display: flex; flex-direction: column; align-items: center;
+}
+h1 { font-size: 21px; color: #1a2e4a; margin-bottom: 5px; font-weight: 700; text-align: center; }
+.sub { font-size: 12px; color: #6b7a8d; margin-bottom: 28px; text-align: center; }
+
+.card {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 48px rgba(0,0,0,.12);
+  padding: 32px 32px 28px;
+  overflow-x: auto;
+}
+
+.diagram { position: relative; width: 1080px; height: 580px; }
+
+/* ── Bands ── */
+.band {
+  position: absolute;
+  left: 72px; right: 0;
+  border-radius: 10px;
+}
+.band-lbl {
+  position: absolute;
+  left: 0; width: 66px;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; font-size: 9.5px; font-weight: 700;
+  color: #fff; border-radius: 8px;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  padding: 6px 3px; letter-spacing: .6px; text-transform: uppercase;
+}
+
+/* ── Boxes ── */
+.box {
+  position: absolute; border-radius: 9px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 8px 7px;
+  font-size: 10.5px; line-height: 1.35;
+  box-shadow: 0 2px 10px rgba(0,0,0,.16);
+  transition: transform .13s, box-shadow .13s;
+  cursor: default;
+}
+.box:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.22); }
+.box b { font-size: 12px; display: block; margin-bottom: 2px; }
+.box small { font-size: 9.5px; opacity: .82; }
+
+.navy   { background: #1b4d8e; color: #fff; }
+.orange { background: #d08217; color: #fff; }
+.sky    { background: #2e88c8; color: #fff; }
+.green  { background: #3a9a4a; color: #fff; }
+.purple { background: #7040a0; color: #fff; }
+.slate  { background: #546e7a; color: #fff; }
+
+.arrows { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+</style>
+</head>
+<body>
+
+<h1>Архитектура мобильного приложения «Маяк Здоровья»</h1>
+<p class="sub">Flutter / Android · Riverpod 2.x · GoRouter · Dio · Laravel REST API · Firebase FCM</p>
+
+<div class="card">
+<div class="diagram">
+
+  <!-- ═══ BAND BACKGROUNDS ═══ -->
+  <div class="band" style="top:22px;  height:128px; background:#e6f4ff; border:1.5px solid #a8d4f5;"></div>
+  <div class="band" style="top:168px; height:118px; background:#f4eaff; border:1.5px solid #cca8f5;"></div>
+  <div class="band" style="top:304px; height:118px; background:#e8fce8; border:1.5px solid #a5dca5;"></div>
+  <div class="band" style="top:440px; height:122px; background:#f5f5f5; border:1.5px solid #ccc;"></div>
+
+  <!-- ═══ BAND LABELS ═══ -->
+  <div class="band-lbl" style="top:22px;  height:128px; background:#2e88c8;">Presentation</div>
+  <div class="band-lbl" style="top:168px; height:118px; background:#7040a0;">State</div>
+  <div class="band-lbl" style="top:304px; height:118px; background:#3a9a4a;">Data</div>
+  <div class="band-lbl" style="top:440px; height:122px; background:#444;">External</div>
+
+  <!-- ══════════════ PRESENTATION BAND ══════════════ -->
+
+  <!-- PHONE -->
+  <div class="box navy" style="left:78px; top:44px; width:100px; height:72px;">
+    <b>PHONE</b><small>Android</small>
+  </div>
+
+  <!-- main.dart -->
+  <div class="box orange" style="left:210px; top:44px; width:138px; height:72px;">
+    <b>main.dart</b>
+    <small>ProviderScope<br>Firebase.init()</small>
+  </div>
+
+  <!-- GoRouter -->
+  <div class="box sky" style="left:386px; top:44px; width:138px; height:72px;">
+    <b>GoRouter</b>
+    <small>router.dart<br>Auth Redirect Guard</small>
+  </div>
+
+  <!-- Screens -->
+  <div class="box green" style="left:700px; top:44px; width:145px; height:72px;">
+    <b>Экраны (UI)</b>
+    <small>*_screen.dart<br>Flutter Widgets</small>
+  </div>
+
+  <!-- Local Notifications -->
+  <div class="box orange" style="left:882px; top:44px; width:150px; height:72px;">
+    <b>Local Notif</b>
+    <small>firebase_messaging<br>_service.dart</small>
+  </div>
+
+  <!-- ══════════════ STATE BAND ══════════════ -->
+
+  <!-- AuthController (directly below GoRouter) -->
+  <div class="box purple" style="left:386px; top:188px; width:138px; height:72px;">
+    <b>AuthController</b>
+    <small>StateNotifier<br>AuthStatus</small>
+  </div>
+
+  <!-- FutureProviders -->
+  <div class="box purple" style="left:560px; top:188px; width:155px; height:72px;">
+    <b>FutureProviders</b>
+    <small>doctors · services<br>appointments · blog</small>
+  </div>
+
+  <!-- BookingWizard (directly below Screens) -->
+  <div class="box purple" style="left:745px; top:188px; width:145px; height:72px;">
+    <b>BookingWizard</b>
+    <small>NotifierProvider<br>booking/state/</small>
+  </div>
+
+  <!-- ══════════════ DATA BAND ══════════════ -->
+
+  <!-- Repositories -->
+  <div class="box green" style="left:210px; top:323px; width:178px; height:72px;">
+    <b>Репозитории</b>
+    <small>auth · doctors<br>services · booking · blog</small>
+  </div>
+
+  <!-- Dio -->
+  <div class="box sky" style="left:424px; top:323px; width:138px; height:72px;">
+    <b>Dio Client</b>
+    <small>dio_client.dart<br>Bearer JWT Interceptor</small>
+  </div>
+
+  <!-- SecureStorage -->
+  <div class="box slate" style="left:598px; top:323px; width:145px; height:72px;">
+    <b>SecureStorage</b>
+    <small>JWT токен<br>flutter_secure_storage</small>
+  </div>
+
+  <!-- ══════════════ EXTERNAL BAND ══════════════ -->
+
+  <!-- LARAVEL API -->
+  <div class="box navy" style="left:210px; top:460px; width:150px; height:72px;">
+    <b>LARAVEL API</b>
+    <small>/api/v1</small>
+  </div>
+
+  <!-- DATABASE -->
+  <div class="box navy" style="left:396px; top:460px; width:130px; height:72px;">
+    <b>DATABASE</b>
+    <small>MySQL</small>
+  </div>
+
+  <!-- Firebase FCM -->
+  <div class="box orange" style="left:882px; top:460px; width:150px; height:72px;">
+    <b>Firebase FCM</b>
+    <small>Cloud Messaging<br>External Service</small>
+  </div>
+
+  <!-- ══════════════ SVG ARROWS ══════════════ -->
+  <svg class="arrows" viewBox="0 0 1080 580">
+    <defs>
+      <!-- Standard forward -->
+      <marker id="a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#445"/>
+      </marker>
+      <!-- Bidirectional back (marker-start) -->
+      <marker id="ab" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0,8 3,0 6" fill="#445"/>
+      </marker>
+      <!-- Purple forward -->
+      <marker id="ap" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#7040a0"/>
+      </marker>
+      <!-- Purple back -->
+      <marker id="apb" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto-start-reverse">
+        <polygon points="0 0,8 3,0 6" fill="#7040a0"/>
+      </marker>
+      <!-- Orange -->
+      <marker id="ao" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#c07010"/>
+      </marker>
+      <!-- Slate -->
+      <marker id="as" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#546e7a"/>
+      </marker>
+    </defs>
+
+    <!-- ─── PRESENTATION horizontal ─── -->
+
+    <!-- PHONE → main.dart -->
+    <line x1="178" y1="80" x2="205" y2="80" stroke="#445" stroke-width="2" marker-end="url(#a)"/>
+
+    <!-- main.dart → GoRouter -->
+    <line x1="348" y1="80" x2="381" y2="80" stroke="#445" stroke-width="2" marker-end="url(#a)"/>
+
+    <!-- GoRouter → Screens (long, with label) -->
+    <line x1="524" y1="80" x2="695" y2="80" stroke="#445" stroke-width="2" marker-end="url(#a)"/>
+    <rect x="556" y="66" width="106" height="14" rx="3" fill="white" opacity=".9"/>
+    <text x="609" y="77" text-anchor="middle" font-size="9" fill="#555" font-family="Segoe UI,sans-serif">навигация</text>
+
+    <!-- ─── PRESENTATION ↕ STATE ─── -->
+
+    <!-- GoRouter ↔ AuthController (bidirectional, straight vertical) -->
+    <!-- GoRouter center x=455, AuthController center x=455 — aligned! -->
+    <line x1="449" y1="116" x2="449" y2="183" stroke="#7040a0" stroke-width="2"
+          marker-start="url(#apb)" marker-end="url(#ap)"/>
+    <rect x="454" y="138" width="60" height="13" rx="3" fill="white" opacity=".95"/>
+    <text x="484" y="148" text-anchor="middle" font-size="9" fill="#7040a0" font-family="Segoe UI,sans-serif">AuthStatus</text>
+
+    <!-- Screens ↔ FutureProviders (orthogonal) -->
+    <!-- Screens center x=772, FutureProviders center x=637 -->
+    <path d="M 769 116 L 769 154 L 637 154 L 637 183" stroke="#7040a0" stroke-width="2" fill="none"
+          marker-start="url(#apb)" marker-end="url(#ap)"/>
+    <rect x="646" y="142" width="76" height="13" rx="3" fill="white" opacity=".95"/>
+    <text x="684" y="152" text-anchor="middle" font-size="9" fill="#7040a0" font-family="Segoe UI,sans-serif">данные / watch()</text>
+
+    <!-- Screens ↔ BookingWizard (straight vertical, both at ~x=817) -->
+    <!-- Screens center x=772, BookingWizard center x=817 — close enough for near-vertical -->
+    <line x1="807" y1="116" x2="807" y2="183" stroke="#7040a0" stroke-width="1.8" stroke-dasharray="5,3"
+          marker-start="url(#apb)" marker-end="url(#ap)"/>
+
+    <!-- ─── STATE ↕ DATA ─── -->
+
+    <!-- AuthController → Repositories (orthogonal) -->
+    <!-- AuthCtrl center x=455, Repos center x=299 -->
+    <path d="M 421 260 L 421 295 L 299 295 L 299 318" stroke="#445" stroke-width="1.8" fill="none"
+          marker-end="url(#a)"/>
+
+    <!-- FutureProviders → Repositories (orthogonal) -->
+    <!-- FutureP center x=637 -->
+    <path d="M 637 260 L 637 295 L 299 295 L 299 318" stroke="#445" stroke-width="1.8" fill="none"
+          marker-end="url(#a)"/>
+
+    <!-- BookingWizard → Repositories (orthogonal) -->
+    <!-- BookingWizard center x=817 -->
+    <path d="M 817 260 L 817 295 L 299 295 L 299 318" stroke="#445" stroke-width="1.5" stroke-dasharray="5,3" fill="none"
+          marker-end="url(#a)"/>
+
+    <!-- AuthController → SecureStorage (reads/writes JWT) -->
+    <!-- AuthCtrl center x=455, SecureStorage center x=670 -->
+    <path d="M 487 224 L 670 224 L 670 318" stroke="#546e7a" stroke-width="1.5" stroke-dasharray="5,3" fill="none"
+          marker-end="url(#as)"/>
+    <rect x="496" y="212" width="60" height="13" rx="3" fill="white" opacity=".9"/>
+    <text x="526" y="222" text-anchor="middle" font-size="9" fill="#546e7a" font-family="Segoe UI,sans-serif">JWT токен</text>
+
+    <!-- ─── DATA horizontal ─── -->
+
+    <!-- Repositories → Dio -->
+    <line x1="388" y1="359" x2="419" y2="359" stroke="#445" stroke-width="2" marker-end="url(#a)"/>
+
+    <!-- SecureStorage → Dio (provides JWT, left arrow) -->
+    <line x1="598" y1="363" x2="562" y2="363" stroke="#546e7a" stroke-width="1.5" stroke-dasharray="4,3"
+          marker-end="url(#as)"/>
+    <rect x="560" y="350" width="36" height="13" rx="3" fill="white" opacity=".9"/>
+    <text x="578" y="360" text-anchor="middle" font-size="9" fill="#546e7a" font-family="Segoe UI,sans-serif">JWT</text>
+
+    <!-- ─── DATA ↕ EXTERNAL ─── -->
+
+    <!-- Dio ↔ LARAVEL API (bidirectional, orthogonal) -->
+    <!-- Dio center x=493, LaravelAPI center x=285 -->
+    <path d="M 481 395 L 481 428 L 289 428 L 289 455" stroke="#445" stroke-width="2" fill="none"
+          marker-end="url(#a)"/>
+    <!-- response back -->
+    <path d="M 281 455 L 281 428 L 473 428 L 473 395" stroke="#445" stroke-width="1.5" stroke-dasharray="5,3" fill="none"
+          marker-end="url(#a)"/>
+    <rect x="320" y="416" width="100" height="13" rx="3" fill="white" opacity=".95"/>
+    <text x="370" y="426" text-anchor="middle" font-size="9" fill="#555" font-family="Segoe UI,sans-serif">REST / JSON response</text>
+
+    <!-- ─── EXTERNAL horizontal ─── -->
+
+    <!-- LARAVEL API → DATABASE -->
+    <line x1="360" y1="496" x2="391" y2="496" stroke="#445" stroke-width="2" marker-end="url(#a)"/>
+    <!-- DATABASE → LARAVEL (response) -->
+    <line x1="391" y1="504" x2="360" y2="504" stroke="#445" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a)"/>
+
+    <!-- LARAVEL API → Firebase FCM (server sends push) -->
+    <path d="M 360 482 L 887 482" stroke="#c07010" stroke-width="1.5" stroke-dasharray="6,4" fill="none"
+          marker-end="url(#ao)"/>
+    <rect x="470" y="469" width="200" height="14" rx="3" fill="#f5f5f5" opacity=".97"/>
+    <text x="570" y="480" text-anchor="middle" font-size="9.5" fill="#c07010" font-family="Segoe UI,sans-serif">SendAppointmentReminderJob → FCM API</text>
+
+    <!-- Firebase FCM → Local Notifications (vertical up, right side) -->
+    <!-- FCM center x=957, LocalNotif center x=957 — perfectly aligned! -->
+    <path d="M 957 455 L 957 116" stroke="#c07010" stroke-width="2" fill="none" stroke-dasharray="7,4"
+          marker-end="url(#ao)"/>
+    <rect x="960" y="270" width="72" height="30" rx="4" fill="white" opacity=".95"/>
+    <text x="996" y="282" text-anchor="middle" font-size="9" fill="#c07010" font-family="Segoe UI,sans-serif">push</text>
+    <text x="996" y="294" text-anchor="middle" font-size="9" fill="#c07010" font-family="Segoe UI,sans-serif">notification</text>
+
+    <!-- Local Notifications → Screens (user taps notification → deep link) -->
+    <line x1="882" y1="80" x2="850" y2="80" stroke="#c07010" stroke-width="1.5" stroke-dasharray="5,3"
+          marker-end="url(#ao)"/>
+    <rect x="838" y="67" width="44" height="13" rx="3" fill="white" opacity=".9"/>
+    <text x="860" y="77" text-anchor="middle" font-size="9" fill="#c07010" font-family="Segoe UI,sans-serif">tap →</text>
+
+  </svg>
+
+</div>
+</div>
+
+<!-- Legend -->
+<div style="display:flex;gap:22px;margin-top:20px;justify-content:center;flex-wrap:wrap;font-size:11px;color:#555;">
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#445" stroke-width="2" marker-end="url(#a)"/></svg>
+    Вызов / запрос
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#445" stroke-width="1.5" stroke-dasharray="4,2"/></svg>
+    Ответ
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#7040a0" stroke-width="2"/></svg>
+    Riverpod (состояние)
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#546e7a" stroke-width="1.5" stroke-dasharray="4,2"/></svg>
+    JWT / Storage
+  </span>
+  <span style="display:flex;align-items:center;gap:6px;">
+    <svg width="28" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#c07010" stroke-width="2" stroke-dasharray="5,3"/></svg>
+    Firebase Push
+  </span>
+</div>
+
+</body>
+</html>

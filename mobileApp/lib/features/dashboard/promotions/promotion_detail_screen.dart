@@ -304,7 +304,7 @@ class _PromotionDetailBody extends StatelessWidget {
                             ),
                           );
                         }
-                        final origin = Uri.parse(kApiBaseUrl).origin;
+                        final origin = Uri.parse(resolvedApiBaseUrl).origin;
                         final htmlData = stripJustifyFromHtml(
                           preprocessHtmlForFlutter(
                             raw,

@@ -64,6 +64,8 @@ class SettingsPage extends Page implements HasForms
         'legal_company_name' => ['legal', 'company_name'],
         'legal_unp' => ['legal', 'unp'],
         'legal_license_number' => ['legal', 'license_number'],
+
+        'booking_slot_step_minutes' => ['booking', 'slot_step_minutes'],
     ];
 
     public function mount(): void
@@ -99,6 +101,17 @@ class SettingsPage extends Page implements HasForms
                             TextInput::make('schedule_saturday')->label('Суббота')->maxLength(120),
                             TextInput::make('schedule_sunday')->label('Воскресенье')->maxLength(120),
                         ])->columns(3),
+
+                        Tab::make('Онлайн-запись')->schema([
+                            TextInput::make('booking_slot_step_minutes')
+                                ->label('Шаг сетки слотов (мин.)')
+                                ->numeric()
+                                ->minValue(5)
+                                ->maxValue(240)
+                                ->step(5)
+                                ->nullable()
+                                ->helperText('Интервал между допустимыми началами слотов. Оставьте пустым — использовать длительность приёма из карточки каждой услуги.'),
+                        ])->columns(1),
 
                         Tab::make('Социальные сети')->schema([
                             TextInput::make('social_instagram')->label('Instagram URL')->url()->maxLength(255),

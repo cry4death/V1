@@ -122,7 +122,7 @@
                     <div class="contact-form-container" id="contact-form">
                         <h2>Обратная связь</h2>
                         <p class="form-subtitle">Остались вопросы? Напишите нам!</p>
-                        <form class="contact-form" method="POST" action="#">
+                        <form class="contact-form" method="POST" action="{{ route('contacts.store') }}">
                             @csrf
                             <div class="form-group">
                                 <input type="text" id="name" name="name" placeholder="Ваше имя" required>

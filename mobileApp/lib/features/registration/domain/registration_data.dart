@@ -17,6 +17,9 @@ class RegistrationData {
 
   const RegistrationData.empty() : this();
 
+  /// E.164 без «+»: `375` и 9 национальных цифр из [phone].
+  String get phoneE164 => '375$phone';
+
   RegistrationData copyWith({
     String? lastName,
     String? firstName,

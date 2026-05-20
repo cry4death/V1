@@ -8,8 +8,8 @@ class DoctorGridCard extends StatelessWidget {
   final String firstName;
   final String patronymic;
   final String specialty;
-  final int experienceYears;
-  final String gradeName;
+  final int? experienceYears;
+  final String? gradeName;
   final double rating;
   final String photoUrl;
   final VoidCallback? onTap;
@@ -21,8 +21,8 @@ class DoctorGridCard extends StatelessWidget {
     required this.firstName,
     required this.patronymic,
     required this.specialty,
-    required this.experienceYears,
-    required this.gradeName,
+    this.experienceYears,
+    this.gradeName,
     required this.rating,
     required this.photoUrl,
     this.onTap,
@@ -145,50 +145,54 @@ class DoctorGridCard extends StatelessWidget {
                           color: AppColors.primary,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.access_time_outlined,
-                              size: 12, color: AppColors.primary),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Стаж: ${expLabel(experienceYears)}',
-                            style: GoogleFonts.inter(
-                              fontSize: 10,
-                              color: const Color(0xFF717784),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F4FD),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      if (experienceYears != null && experienceYears! > 0) ...[
+                        const SizedBox(height: 6),
+                        Row(
                           children: [
-                            const Icon(Icons.workspace_premium_outlined,
-                                size: 10, color: AppColors.primary),
-                            const SizedBox(width: 3),
-                            Flexible(
-                              child: Text(
-                                gradeName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                ),
+                            const Icon(Icons.access_time_outlined,
+                                size: 12, color: AppColors.primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Стаж: ${expLabel(experienceYears!)}',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                color: const Color(0xFF717784),
                               ),
                             ),
                           ],
                         ),
-                      ),
+                      ],
+                      if (gradeName != null && gradeName!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F4FD),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.workspace_premium_outlined,
+                                  size: 10, color: AppColors.primary),
+                              const SizedBox(width: 3),
+                              Flexible(
+                                child: Text(
+                                  gradeName!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const Spacer(),
                       SizedBox(
                         width: double.infinity,

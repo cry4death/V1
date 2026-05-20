@@ -101,13 +101,20 @@
                     <div class="nav-mobile-info__item">
                         <span class="nav-mobile-info__title">Пациенту</span>
                         @auth('patient')
-                            <span class="nav-mobile-info__text">{{ Auth::guard('patient')->user()->first_name }}</span>
-                            <a href="{{ route('booking.index') }}" class="nav-mobile-info__link">Записаться на приём</a>
-                            <form action="{{ route('patient.logout') }}" method="POST" class="nav-mobile-patient-logout" style="margin-top: 0.5rem;">
-                                @csrf
-                                <button type="submit" class="nav-mobile-info__link" style="background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: #0ea5e9; text-decoration: underline;">Выход</button>
-                            </form>
+                            @php($mobilePatient = Auth::guard('patient')->user())
+                            <a href="{{ route('booking.start') }}" class="nav-mobile-book-btn">Записаться</a>
+                            <a href="{{ route('cabinet.dashboard') }}" class="nav-mobile-account-card" aria-label="Личный кабинет, {{ $mobilePatient->displayFirstName() }}">
+                                <span class="nav-mobile-account-card__avatar" aria-hidden="true">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                                <div class="nav-mobile-account-card__body">
+                                    <strong class="nav-mobile-account-card__name">{{ $mobilePatient->displayFirstName() }}</strong>
+                                    <span class="nav-mobile-account-card__hint">Личный кабинет</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-right nav-mobile-account-card__arrow" aria-hidden="true"></i>
+                            </a>
                         @else
+                            <a href="{{ route('booking.start') }}" class="nav-mobile-book-btn">Записаться</a>
                             <a href="{{ route('patient.login') }}" class="nav-mobile-info__link">Вход</a>
                             <a href="{{ route('patient.register.profile') }}" class="nav-mobile-info__link">Регистрация</a>
                         @endauth
@@ -140,21 +147,6 @@
                 </a>
             </div>
             <div class="header-contact">
-                <div class="header-patient-auth" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                    @auth('patient')
-                        <span class="header-patient-name" style="font-size: 0.9rem; color: #334155;">{{ Auth::guard('patient')->user()->first_name }}</span>
-                        <a href="{{ route('booking.index') }}" class="btn primary-btn" style="font-size: 0.85rem; padding: 0.4rem 0.75rem;">
-                            <i class="fa-regular fa-calendar-check"></i> Запись
-                        </a>
-                        <form action="{{ route('patient.logout') }}" method="POST" style="display: inline; margin: 0;">
-                            @csrf
-                            <button type="submit" class="btn" style="font-size: 0.85rem; padding: 0.4rem 0.75rem; background: #f1f5f9; border: 1px solid #e2e8f0;">Выход</button>
-                        </form>
-                    @else
-                        <a href="{{ route('patient.login') }}" style="font-size: 0.9rem; color: #0f172a;">Вход</a>
-                        <a href="{{ route('patient.register.profile') }}" style="font-size: 0.9rem; color: #0ea5e9;">Регистрация</a>
-                    @endauth
-                </div>
                 <form action="{{ route('search') }}" method="GET" class="search-box">
                     <input type="text" name="q" placeholder="Поиск..." class="search-input" />
                     <button type="submit" class="search-btn">
@@ -164,11 +156,24 @@
                 <a href="tel:{{ $phoneShortTel }}" class="header-phone-link">
                     <i class="fa-solid fa-phone"></i> {{ $phoneShort }} ({{ $phoneShortNote }})
                 </a>
-                <div class="header-buttons">
-                    <a href="{{ route('booking.index') }}" class="btn appointment-btn">
-                        <i class="fa-regular fa-calendar-check"></i> Записаться
-                    </a>
-                </div>
+                @guest('patient')
+                    <div class="header-buttons">
+                        <a href="{{ route('booking.start') }}" class="btn appointment-btn">Записаться</a>
+                        <a href="{{ route('patient.login') }}" class="btn account-btn">Личный кабинет</a>
+                    </div>
+                @endguest
+                @auth('patient')
+                    <div class="header-patient-auth">
+                        @php($hdrPatient = Auth::guard('patient')->user())
+                        <a href="{{ route('booking.start') }}" class="btn appointment-btn">Записаться</a>
+                        <a href="{{ route('cabinet.dashboard') }}" class="header-patient-profile-link" title="Личный кабинет" aria-label="Личный кабинет, {{ $hdrPatient->displayFirstName() }}">
+                            <span class="header-patient-avatar" aria-hidden="true">
+                                <i class="fa-solid fa-user"></i>
+                            </span>
+                            <span class="header-patient-name">{{ $hdrPatient->displayFirstName() }}</span>
+                        </a>
+                    </div>
+                @endauth
             </div>
             <button type="button" class="mobile-menu-btn" aria-label="Открыть меню" aria-expanded="false">
                 <span></span><span></span><span></span>

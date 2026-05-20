@@ -1,37 +1,89 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/biometric/biometric_auth_service.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/storage/providers.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/outline_button.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
 import '_progress_bar.dart';
 
-class FaceIdSetupScreen extends ConsumerWidget {
-  const FaceIdSetupScreen({super.key});
+class FaceIdSetupScreen extends ConsumerStatefulWidget {
+  /// Показывать ли прогресс-бар регистрации (false — для входа по OTP).
+  final bool showProgress;
 
-  Future<void> _enable(BuildContext context, WidgetRef ref) async {
-    await ref.read(authControllerProvider.notifier).setFaceIdEnabled(true);
-    ref.read(authControllerProvider.notifier).markAuthenticated();
-    if (context.mounted) context.go('/dashboard');
+  const FaceIdSetupScreen({super.key, this.showProgress = true});
+
+  @override
+  ConsumerState<FaceIdSetupScreen> createState() => _FaceIdSetupScreenState();
+}
+
+class _FaceIdSetupScreenState extends ConsumerState<FaceIdSetupScreen> {
+  bool _busy = false;
+
+  Future<void> _enable() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final biometric = ref.read(biometricAuthServiceProvider);
+      // Не вызываем только isBiometricAvailable: на части устройств список типов
+      // пуст до первого authenticate (см. README local_auth).
+      // Только настоящая биометрия: иначе система может принять PIN *телефона*,
+      // и включение «Face ID» в приложении было бы без сканирования лица.
+      final ok = await biometric.authenticate(
+        localizedReason:
+            'Подтвердите лицом или отпечатком, чтобы включить быстрый вход',
+        biometricOnly: true,
+      );
+      if (!mounted) return;
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Вход не подтверждён или отменён. Нажмите кнопку ещё раз или выберите «Пропустить».',
+            ),
+          ),
+        );
+        return;
+      }
+
+      await ref.read(authControllerProvider.notifier).setFaceIdEnabled(true);
+      ref.read(authControllerProvider.notifier).markAuthenticated();
+      if (mounted) context.go('/dashboard');
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(biometricPlatformErrorMessage(e))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
-  Future<void> _skip(BuildContext context, WidgetRef ref) async {
-    await ref.read(authControllerProvider.notifier).setFaceIdEnabled(false);
-    ref.read(authControllerProvider.notifier).markAuthenticated();
-    if (context.mounted) context.go('/dashboard');
+  Future<void> _skip() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(authControllerProvider.notifier).setFaceIdEnabled(false);
+      ref.read(authControllerProvider.notifier).markAuthenticated();
+      if (mounted) context.go('/dashboard');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            RegistrationProgressBar(step: 5, total: 5),
+            if (widget.showProgress) RegistrationProgressBar(step: 5, total: 5),
             const Spacer(),
 
             // Face ID icon
@@ -77,24 +129,41 @@ class FaceIdSetupScreen extends ConsumerWidget {
               ),
             ).animate().fadeIn(delay: 150.ms),
 
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Text(
+                'На части телефонов разблокировка «лицом» только для экрана не считается биометрией для приложений — тогда в настройках нужно добавить отпечаток пальца (или включить биометрию для приложений, если такой пункт есть). Если в окне подтверждения система предлагает только палец — так сделано на уровне Android, а не приложения.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppColors.textHint,
+                  height: 1.5,
+                ),
+              ),
+            ),
+
             const Spacer(),
 
+            // ⚠️ Не оборачивать кнопки в fadeIn: при opacity 0 hit-test отключён —
+            // тапы не доходят до GestureDetector.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   PrimaryButton(
-                    label: 'Включить Face ID',
-                    onTap: () => _enable(context, ref),
+                    label: _busy ? 'Подождите…' : 'Включить Face ID',
+                    isEnabled: !_busy,
+                    onTap: _enable,
                   ),
                   const SizedBox(height: 12),
                   AppOutlineButton(
                     label: 'Пропустить',
-                    onTap: () => _skip(context, ref),
+                    onTap: _busy ? null : _skip,
                   ),
                 ],
               ),
-            ).animate().fadeIn(delay: 200.ms),
+            ),
 
             const SizedBox(height: 12),
           ],

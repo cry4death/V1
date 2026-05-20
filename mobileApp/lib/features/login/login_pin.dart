@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/biometric/biometric_auth_service.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/storage/providers.dart';
 import '../../core/widgets/clinic_logo.dart';
 import '../auth/presentation/controllers/auth_controller.dart';
 import '../registration/steps/_numpad.dart';
@@ -97,6 +100,36 @@ class _LoginPinScreenState extends ConsumerState<LoginPinScreen> {
       }
       _status = _Status.idle;
     });
+  }
+
+  Future<void> _tryBiometric() async {
+    if (_status == _Status.locked || _status == _Status.success) return;
+
+    try {
+      final biometric = ref.read(biometricAuthServiceProvider);
+      final ok = await biometric.authenticate(
+        localizedReason: 'Подтвердите личность для входа в приложение',
+      );
+      if (!mounted) return;
+      if (ok) {
+        setState(() => _status = _Status.success);
+        ref.read(authControllerProvider.notifier).markAuthenticated();
+        Future.delayed(const Duration(milliseconds: 900), () {
+          if (mounted) context.go('/dashboard');
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Вход по биометрии отменён. Попробуйте снова или введите PIN.'),
+          ),
+        );
+      }
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(biometricPlatformErrorMessage(e))),
+      );
+    }
   }
 
   void _checkPin(String pin) {
@@ -265,7 +298,7 @@ class _LoginPinScreenState extends ConsumerState<LoginPinScreen> {
                     if (faceIdEnabled && !isDisabled) ...[
                       const SizedBox(height: 8),
                       GestureDetector(
-                        onTap: () => context.go('/login/faceid'),
+                        onTap: _tryBiometric,
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Column(

@@ -51,23 +51,24 @@ class DoctorSeeder extends Seeder
             ['slug' => Slug::make('Макеева-Алеся-Викторовна')],
             [
                 'specialization_id' => $makeevaSpec->id,
-                'last_name'         => 'Макеева',
-                'first_name'        => 'Алеся',
-                'middle_name'       => 'Викторовна',
-                'category'          => 'first',
-                'experience_years'  => 22,
-                'experience_since'  => 2004,
-                'patient_age'       => 'both',
-                'photo'             => 'images/doctor-profile.png',
-                'description'       => $makeevaDescription,
-                'education'         => $makeevaEducation,
-                'status'            => 'active',
-                'sort_order'        => 0,
+                'last_name' => 'Макеева',
+                'first_name' => 'Алеся',
+                'middle_name' => 'Викторовна',
+                'category' => 'first',
+                'experience_years' => 22,
+                'experience_since' => 2004,
+                'patient_age' => 'both',
+                'photo' => 'images/doctor-profile.png',
+                'description' => $makeevaDescription,
+                'education' => $makeevaEducation,
+                'status' => 'active',
+                'sort_order' => 0,
             ]
         );
 
         $uziServiceIds = Service::whereHas('direction', fn ($q) => $q->where('name', 'УЗИ'))
-            ->limit(18)->pluck('id');
+            ->orderBy('sort_order')
+            ->pluck('id');
         if ($uziServiceIds->isNotEmpty()) {
             $makeeva->services()->sync($uziServiceIds);
         }
@@ -81,11 +82,11 @@ class DoctorSeeder extends Seeder
         Review::where('doctor_id', $makeeva->id)->delete();
         foreach ($makeevaReviews as [$author, $date, $rating, $text]) {
             Review::create([
-                'doctor_id'    => $makeeva->id,
-                'author_name'  => $author,
-                'rating'       => $rating,
-                'text'         => $text,
-                'status'       => 'approved',
+                'doctor_id' => $makeeva->id,
+                'author_name' => $author,
+                'rating' => $rating,
+                'text' => $text,
+                'status' => 'approved',
                 'published_at' => $date,
             ]);
         }
@@ -95,21 +96,21 @@ class DoctorSeeder extends Seeder
         $doctors = [
             ['Кузнецов',   'Владимир', 'Сергеевич', 'Проктолог',                      'highest', 12, 'adults',   'doctor-m1.jpg', ['Проктология']],
             ['Смирнова',   'Ольга',    'Игоревна',  'Проктолог',                      'first',   8,  'adults',   'doctor-f1.jpg', ['Проктология']],
-            ['Петров',     'Андрей',   'Викторович','Проктолог',                      'second',  6,  'adults',   'doctor-m2.jpg', ['Проктология']],
+            ['Петров',     'Андрей',   'Викторович', 'Проктолог',                      'second',  6,  'adults',   'doctor-m2.jpg', ['Проктология']],
             ['Иванов',     'Пётр',     'Сергеевич', 'Терапевт',                       'first',   11, 'both',     'doctor-m1.jpg', ['Терапия']],
-            ['Лебедев',    'Игорь',    'Александрович','Терапевт',                   'highest', 16, 'adults',   'doctor-m5.jpg', ['Терапия']],
+            ['Лебедев',    'Игорь',    'Александрович', 'Терапевт',                   'highest', 16, 'adults',   'doctor-m5.jpg', ['Терапия']],
             ['Сидоров',    'Михаил',   'Андреевич', 'Кардиолог',                      'highest', 14, 'adults',   'doctor-m2.jpg', ['Кардиология']],
             ['Павлов',     'Николай',  'Олегович',  'Кардиолог',                      'first',   7,  'adults',   'doctor-m2.jpg', ['Кардиология']],
-            ['Новикова',   'Елена',    'Дмитриевна','Невролог',                       'first',   10, 'both',     'doctor-f3.jpg', ['Неврология']],
-            ['Орлова',     'Наталья',  'Владимировна','Невролог',                    'highest', 13, 'adults',   'doctor-f2.jpg', ['Неврология']],
-            ['Денисевич',  'Юлия',     'Александровна','Акушер-гинеколог',           'highest', 8,  'adults',   'doctor-f1.jpg', ['Гинекология', 'Лазерная гинекология']],
+            ['Новикова',   'Елена',    'Дмитриевна', 'Невролог',                       'first',   10, 'both',     'doctor-f3.jpg', ['Неврология']],
+            ['Орлова',     'Наталья',  'Владимировна', 'Невролог',                    'highest', 13, 'adults',   'doctor-f2.jpg', ['Неврология']],
+            ['Денисевич',  'Юлия',     'Александровна', 'Акушер-гинеколог',           'highest', 8,  'adults',   'doctor-f1.jpg', ['Гинекология', 'Лазерная гинекология']],
             ['Белова',     'Ольга',    'Сергеевна', 'Акушер-гинеколог',               'first',   10, 'adults',   'doctor-f1.jpg', ['Гинекология']],
-            ['Волкова',    'Ольга',    'Николаевна','Эндокринолог',                   'highest', 12, 'adults',   'doctor-f1.jpg', ['Эндокринология']],
-            ['Фёдоров',    'Андрей',   'Владимирович','Гастроэнтеролог',             'first',   9,  'both',     'doctor-m4.jpg', ['Гастроэнтерология']],
-            ['Громов',     'Александр','Николаевич','Хирург',                         'highest', 15, 'both',     'doctor-m4.jpg', ['Хирургия', 'Лазерная хирургия']],
+            ['Волкова',    'Ольга',    'Николаевна', 'Эндокринолог',                   'highest', 12, 'adults',   'doctor-f1.jpg', ['Эндокринология']],
+            ['Фёдоров',    'Андрей',   'Владимирович', 'Гастроэнтеролог',             'first',   9,  'both',     'doctor-m4.jpg', ['Гастроэнтерология']],
+            ['Громов',     'Александр', 'Николаевич', 'Хирург',                         'highest', 15, 'both',     'doctor-m4.jpg', ['Хирургия', 'Лазерная хирургия']],
             ['Морозов',    'Дмитрий',  'Игоревич',  'Уролог',                         'second',  6,  'both',     'doctor-m3.jpg', ['Урология']],
             ['Егорова',    'Мария',    'Сергеевна', 'Флеболог',                       'first',   8,  'adults',   'doctor-f2.jpg', ['Флебология']],
-            ['Козлова',    'Анна',     'Викторовна','Маммолог',                       'second',  7,  'adults',   'doctor-f2.jpg', ['Маммология']],
+            ['Козлова',    'Анна',     'Викторовна', 'Маммолог',                       'second',  7,  'adults',   'doctor-f2.jpg', ['Маммология']],
             ['Романова',   'Татьяна',  'Ивановна',  'Диетолог',                       'first',   9,  'both',     'doctor-f3.jpg', ['Диетология']],
             ['Зайцева',    'Ирина',    'Олеговна',  'Психолог',                       'first',   8,  'both',     'doctor-f2.jpg', ['Психология']],
             ['Соколов',    'Алексей',  'Петрович',  'Психотерапевт',                  'highest', 14, 'adults',   'doctor-m5.jpg', ['Психотерапия']],
@@ -151,7 +152,8 @@ class DoctorSeeder extends Seeder
             );
 
             $serviceIds = Service::whereHas('direction', fn ($q) => $q->whereIn('name', $dirNames))
-                ->limit(12)->pluck('id');
+                ->orderBy('sort_order')
+                ->pluck('id');
             if ($serviceIds->isNotEmpty()) {
                 $doctor->services()->sync($serviceIds);
             }
@@ -178,7 +180,7 @@ class DoctorSeeder extends Seeder
             return $s;
         }
 
-        return 'Врач-' . mb_strtolower(mb_substr($s, 0, 1)) . mb_substr($s, 1);
+        return 'Врач-'.mb_strtolower(mb_substr($s, 0, 1)).mb_substr($s, 1);
     }
 
     private function minimalDescription(string $first, string $middle, string $specName, string $category, int $years): string

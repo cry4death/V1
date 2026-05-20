@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
+import '../../booking/data/booking_catalog_repository.dart';
+import '../../booking/data/booking_models.dart';
 import 'services_data.dart';
 import 'services_repository.dart';
 
@@ -80,3 +82,16 @@ final servicesInDirectionProvider =
 
 /// Slug направления: при открытии вкладки «Услуги» сразу показать список этой категории (с главного экрана).
 final servicesPendingCategorySlugProvider = StateProvider<String?>((ref) => null);
+
+final _bookingCatalogRepositoryProvider =
+    Provider<BookingCatalogRepository>((ref) {
+  return BookingCatalogRepository(ref.watch(dioProvider));
+});
+
+/// Врачи, оказывающие конкретную услугу (по slug услуги).
+final serviceDoctorsProvider =
+    FutureProvider.family<List<BookingDoctorItem>, String>((ref, serviceSlug) {
+  return ref
+      .watch(_bookingCatalogRepositoryProvider)
+      .fetchDoctors(serviceSlug);
+});

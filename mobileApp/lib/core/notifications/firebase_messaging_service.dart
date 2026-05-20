@@ -64,17 +64,17 @@ class FirebaseMessagingService {
     );
 
     FirebaseMessaging.onMessage.listen((msg) {
-      _incoming.add(NotificationPayload.fromData(msg.data));
+      _incoming.add(NotificationPayload.fromData(_mergeNotification(msg)));
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((msg) {
-      _opened.add(NotificationPayload.fromData(msg.data));
+      _opened.add(NotificationPayload.fromData(_mergeNotification(msg)));
     });
 
     // Сообщение, от которого приложение было запущено из terminated.
     final initial = await _messaging.getInitialMessage();
     if (initial != null) {
-      _opened.add(NotificationPayload.fromData(initial.data));
+      _opened.add(NotificationPayload.fromData(_mergeNotification(initial)));
     }
 
     _messaging.onTokenRefresh.listen(_tokenRefresh.add);
@@ -83,6 +83,17 @@ class FirebaseMessagingService {
   Future<String?> getToken() => _messaging.getToken();
 
   Future<void> deleteToken() => _messaging.deleteToken();
+
+  /// Объединяет data-payload с title/body из FCM notification-поля.
+  /// Нужно для foreground-сообщений: там title/body живут в msg.notification,
+  /// а не в msg.data.
+  Map<String, dynamic> _mergeNotification(RemoteMessage msg) {
+    return {
+      ...msg.data,
+      if (msg.notification?.title != null) 'title': msg.notification!.title!,
+      if (msg.notification?.body != null) 'body': msg.notification!.body!,
+    };
+  }
 
   Future<void> subscribeToTopic(String topic) =>
       _messaging.subscribeToTopic(topic);

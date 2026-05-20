@@ -1,9 +1,13 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../../core/network/api_exception.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../auth/data/patient_auth_providers.dart';
 import '../presentation/controllers/registration_controller.dart';
 import '_progress_bar.dart';
 
@@ -24,6 +28,7 @@ class Step2Phone extends ConsumerStatefulWidget {
 class _Step2PhoneState extends ConsumerState<Step2Phone> {
   late final TextEditingController _ctrl;
   bool _touched = false;
+  bool _loading = false;
 
   @override
   void initState() {
@@ -45,9 +50,34 @@ class _Step2PhoneState extends ConsumerState<Step2Phone> {
     final regCtrl = ref.read(registrationControllerProvider.notifier);
     final isValid = phone.length == 9;
 
-    void handleNext() {
+    Future<void> handleNext() async {
       setState(() => _touched = true);
-      if (isValid) widget.onNext();
+      if (!isValid || _loading) return;
+
+      setState(() => _loading = true);
+      final data = ref.read(registrationControllerProvider).data;
+      try {
+        await ref.read(patientAuthRepositoryProvider).registerRequestOtp(
+              lastName: data.lastName,
+              firstName: data.firstName,
+              middleName: data.middleName.isEmpty ? null : data.middleName,
+              birthDate: data.birthDate,
+              gender: data.gender,
+              phone: data.phoneE164,
+            );
+        if (!mounted) return;
+        widget.onNext();
+      } on DioException catch (e) {
+        if (!mounted) return;
+        final msg = e.error is ApiException
+            ? (e.error! as ApiException).message
+            : (e.message ?? 'Ошибка сети');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
     }
 
     return Scaffold(
@@ -205,9 +235,9 @@ class _Step2PhoneState extends ConsumerState<Step2Phone> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
               child: PrimaryButton(
-                label: 'Получить код',
+                label: _loading ? 'Отправка…' : 'Получить код',
                 onTap: handleNext,
-                isEnabled: isValid,
+                isEnabled: isValid && !_loading,
               ),
             ),
           ],

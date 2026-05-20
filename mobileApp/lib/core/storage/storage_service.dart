@@ -10,7 +10,10 @@ class StorageService {
   static const _keyRegistered = 'mayak_registered';
   static const _keyFirstName = 'mayak_firstName';
   static const _keyLastName = 'mayak_lastName';
+  static const _keyMiddleName = 'mayak_middleName';
   static const _keyPhone = 'mayak_phone';
+  static const _keyBirthDate = 'mayak_birthDate';
+  static const _keyGender = 'mayak_gender';
   static const _keyPin = 'mayak_pin';
   static const _keyFaceId = 'mayak_faceId';
 
@@ -23,13 +26,22 @@ class StorageService {
       (await _prefs).getBool(_keyFaceId) ?? false;
 
   Future<String> getFirstName() async =>
-      (await _prefs).getString(_keyFirstName) ?? 'Пользователь';
+      (await _prefs).getString(_keyFirstName) ?? '';
 
   Future<String> getLastName() async =>
       (await _prefs).getString(_keyLastName) ?? '';
 
+  Future<String> getMiddleName() async =>
+      (await _prefs).getString(_keyMiddleName) ?? '';
+
   Future<String> getPhone() async =>
       (await _prefs).getString(_keyPhone) ?? '';
+
+  Future<String> getBirthDate() async =>
+      (await _prefs).getString(_keyBirthDate) ?? '';
+
+  Future<String> getGender() async =>
+      (await _prefs).getString(_keyGender) ?? '';
 
   Future<String> getPin() async =>
       (await _prefs).getString(_keyPin) ?? '0000';
@@ -38,11 +50,17 @@ class StorageService {
     required String firstName,
     required String lastName,
     required String phone,
+    String middleName = '',
+    String birthDate = '',
+    String gender = '',
   }) async {
     final p = await _prefs;
     await p.setString(_keyFirstName, firstName);
     await p.setString(_keyLastName, lastName);
+    await p.setString(_keyMiddleName, middleName);
     await p.setString(_keyPhone, phone);
+    await p.setString(_keyBirthDate, birthDate);
+    await p.setString(_keyGender, gender);
     await p.setBool(_keyRegistered, true);
   }
 

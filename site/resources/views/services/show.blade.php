@@ -74,7 +74,7 @@
                             </div>
                             <div class="service-price-divider"></div>
                         @endif
-                        <a href="{{ route('booking.index', ['service' => $service->slug]) }}" class="btn primary-btn service-action-btn">
+                        <a href="{{ route('booking.start', ['from' => 'service:'.$service->slug]) }}" class="btn primary-btn service-action-btn">
                             <i class="fa-regular fa-calendar-check"></i> Записаться на приём
                         </a>
                     </div>

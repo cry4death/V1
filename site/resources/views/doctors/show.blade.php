@@ -101,7 +101,7 @@
                         </ul>
 
                         <div class="doctor-hero-actions">
-                            <a href="{{ route('contacts') }}" class="btn doctor-hero-cta">Записаться</a>
+                            <a href="{{ route('booking.start', ['from' => 'doctor:'.$doctor->slug]) }}" class="btn doctor-hero-cta">Записаться</a>
                             <button type="button" class="btn secondary-btn" id="hero-open-review-btn">Оставить отзыв</button>
                         </div>
                     </div>

@@ -1,0 +1,3 @@
+{"sessionId":"abc51f","hypothesisId":"H1","location":"slot.blade:loadSlots:start","message":"request","data":{"dateStr":"2026-05-15","token":18,"currentToken":18},"timestamp":1777660251715,"runId":"booking-audit"}
+{"sessionId":"abc51f","hypothesisId":"H5","location":"slot.blade:fetch:status","message":"http","data":{"dateStr":"2026-05-15","token":18,"ok":true,"status":200},"timestamp":1777660252296,"runId":"booking-audit"}
+{"sessionId":"abc51f","hypothesisId":"H1","location":"slot.blade:fetch:payload","message":"response","data":{"dateStr":"2026-05-15","token":18,"currentToken":18,"stale":false,"listLen":11},"timestamp":1777660252303,"runId":"booking-audit"}

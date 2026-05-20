@@ -8,6 +8,8 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/dio_client.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
+import '../appointments/appointment_model.dart';
+import '../appointments/appointments_providers.dart';
 import '../blog/article_model.dart';
 import '../blog/blog_providers.dart';
 import '../dashboard_tab_provider.dart';
@@ -31,7 +33,7 @@ String? _promoAbsoluteImageUrl(String raw) {
   final t = raw.trim();
   if (t.isEmpty) return null;
   if (t.startsWith('http://') || t.startsWith('https://')) return t;
-  final origin = Uri.parse(kApiBaseUrl).origin;
+  final origin = Uri.parse(resolvedApiBaseUrl).origin;
   if (t.startsWith('/')) return '$origin$t';
   return '$origin/$t';
 }
@@ -92,9 +94,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               SliverToBoxAdapter(
-                child: const _UpcomingAppointmentsEmptyState()
-                    .animate()
-                    .fadeIn(delay: 100.ms),
+                child: _HomeUpcomingAppointments(
+                  onOpenInRecords: (apt) {
+                    ref
+                        .read(appointmentsPendingDetailProvider.notifier)
+                        .state = apt;
+                    ref.read(dashboardTabIndexProvider.notifier).state = 3;
+                  },
+                ).animate().fadeIn(delay: 100.ms),
               ),
 
               // Categories
@@ -520,25 +527,242 @@ class _PromoCard extends StatelessWidget {
   }
 }
 
-// ─── Upcoming appointments (empty; real data later) ──────────────────────────
+// ─── Home: Upcoming Appointments ─────────────────────────────────────────────
 
-class _UpcomingAppointmentsEmptyState extends StatelessWidget {
-  const _UpcomingAppointmentsEmptyState();
+class _HomeUpcomingAppointments extends ConsumerWidget {
+  final void Function(AppointmentModel apt) onOpenInRecords;
+  const _HomeUpcomingAppointments({required this.onOpenInRecords});
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-      child: Text(
-        'У вас нет записей',
-        style: GoogleFonts.inter(
-          fontSize: 13.5,
-          fontWeight: FontWeight.w500,
-          height: 1.35,
-          color: AppColors.textSecondary,
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Обновить при возврате на главную вкладку (индекс 0)
+    ref.listen<int>(dashboardTabIndexProvider, (previous, current) {
+      if (current == 0 && previous != 0) {
+        ref.invalidate(upcomingAppointmentsProvider);
+      }
+    });
+
+    final async = ref.watch(upcomingAppointmentsProvider);
+
+    return async.when(
+      loading: () => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+        child: Container(
+          height: 80,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F7FB),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
         ),
       ),
+      error: (ctx, err) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+        child: Text(
+          'Не удалось загрузить записи',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ),
+      data: (list) {
+        if (list.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F8FB),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFEEF2F7)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F4FD),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.calendar_today_outlined,
+                        size: 18, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Нет предстоящих записей',
+                      style: GoogleFonts.inter(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final screenW = MediaQuery.sizeOf(context).width;
+        final cardWidth = (screenW - 20 - 20 - 28).clamp(260.0, 420.0);
+
+        return SizedBox(
+          height: 120,
+          child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
+                itemCount: list.length,
+                itemBuilder: (context, index) {
+                  final apt = list[index];
+                  final startAt = apt.startAt?.toLocal();
+                  final timeStr = startAt != null
+                      ? '${startAt.hour.toString().padLeft(2, '0')}:${startAt.minute.toString().padLeft(2, '0')}'
+                      : '—';
+                  final dateStr =
+                      startAt != null ? _formatShortDate(startAt) : '—';
+
+                  return GestureDetector(
+                    onTap: () => onOpenInRecords(apt),
+                    child: Container(
+                      width: cardWidth,
+                      margin: EdgeInsets.only(
+                          right: index < list.length - 1 ? 10 : 0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withAlpha(56),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Date box
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(46),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (startAt != null) ...[
+                                  Text(
+                                    '${startAt.day}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      height: 1,
+                                    ),
+                                  ),
+                                  Text(
+                                    _monthShort(startAt.month),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 9,
+                                      color: Colors.white.withAlpha(204),
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ] else
+                                  const Icon(Icons.calendar_today_outlined,
+                                      size: 16, color: Colors.white),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  apt.doctor?.fullName.isNotEmpty == true
+                                      ? apt.doctor!.fullName
+                                      : 'Врач',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    height: 1.25,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '$dateStr · $timeStr',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: Colors.white.withAlpha(204),
+                                    height: 1.25,
+                                  ),
+                                ),
+                                if (apt.service != null) ...[
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    apt.service!.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      color: Colors.white.withAlpha(178),
+                                      height: 1.25,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+      },
     );
+  }
+
+  static const _months = [
+    'янв', 'фев', 'мар', 'апр', 'май', 'июн',
+    'июл', 'авг', 'сен', 'окт', 'ноя', 'дек',
+  ];
+
+  static String _monthShort(int m) => _months[m - 1];
+
+  static String _formatShortDate(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(dt.year, dt.month, dt.day);
+    if (day == today) return 'Сегодня';
+    final tomorrow = today.add(const Duration(days: 1));
+    if (day == tomorrow) return 'Завтра';
+    return '${dt.day} ${_months[dt.month - 1]}';
   }
 }
 
@@ -798,10 +1022,7 @@ class _HomeDoctorsSection extends ConsumerWidget {
         }
         return _DoctorsList(
           doctors: all.take(3).toList(),
-          onBook: (doc) {
-            ref.read(doctorsPendingSlugProvider.notifier).state = doc.slug;
-            ref.read(dashboardTabIndexProvider.notifier).state = 1;
-          },
+          onBook: (doc) => context.push('/booking?doctor=${doc.slug}'),
         );
       },
     );
@@ -1136,7 +1357,7 @@ class _BlogPreviewCard extends StatelessWidget {
                   width: double.infinity,
                   height: 92,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
+                  errorBuilder: (context, error, stack) => Container(
                     height: 92,
                     color: const Color(0xFFE8F4FD),
                   ),

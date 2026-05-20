@@ -33,7 +33,15 @@ final notificationControllerProvider = Provider<_NotificationController>(
     final local = ref.watch(localNotificationsServiceProvider);
 
     final controller = _NotificationController(fcm: fcm, local: local);
-    controller.start();
+
+    // Инициализируем оба сервиса перед стартом подписок.
+    // Используем Future чтобы не блокировать синхронный build.
+    Future(() async {
+      await local.init();
+      await fcm.init();
+      controller.start();
+    });
+
     ref.onDispose(controller.dispose);
     return controller;
   },

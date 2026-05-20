@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Patient\PatientPhoneRequest;
 use App\Http\Requests\Patient\StorePatientRegisterProfileRequest;
 use App\Http\Requests\Patient\VerifyPatientOtpRequest;
+use App\Jobs\SyncPatientToEspo;
 use App\Models\Patient;
 use App\Services\PatientOtpService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PatientRegisterController extends Controller
@@ -114,7 +116,13 @@ class PatientRegisterController extends Controller
         Auth::guard('patient')->login($patient);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('booking.index'))
+        if (config('espo.enabled')) {
+            DB::afterCommit(static function () use ($patient): void {
+                SyncPatientToEspo::dispatch($patient->id);
+            });
+        }
+
+        return redirect()->intended(route('cabinet.dashboard'))
             ->with('status', 'Регистрация завершена.');
     }
 }

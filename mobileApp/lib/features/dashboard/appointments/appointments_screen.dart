@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
+import '../dashboard_tab_provider.dart';
+import 'appointment_model.dart';
+import 'appointments_providers.dart';
+import 'appointments_repository.dart';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -10,11 +16,13 @@ enum _AptStatus { upcoming, completed, cancelled }
 class _Apt {
   final int id;
   final String doctor;
+  final String doctorSlug;
   final String specialty;
   final String date;
   final DateTime dateRaw;
   final String time;
-  final String room;
+  final String service;
+  final String serviceSlug;
   final String address;
   final String phone;
   final String avatar;
@@ -28,11 +36,13 @@ class _Apt {
   const _Apt({
     required this.id,
     required this.doctor,
+    required this.doctorSlug,
     required this.specialty,
     required this.date,
     required this.dateRaw,
     required this.time,
-    required this.room,
+    required this.service,
+    required this.serviceSlug,
     required this.address,
     required this.phone,
     required this.avatar,
@@ -43,128 +53,59 @@ class _Apt {
     this.canReview = false,
     this.reviewed = false,
   });
+
+  static const _months = [
+    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
+  ];
+
+  static String _formatDate(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(dt.year, dt.month, dt.day);
+    final prefix = day == today ? 'Сегодня, ' : '';
+    return '$prefix${dt.day} ${_months[dt.month - 1]} ${dt.year}';
+  }
+
+  static String _formatTime(DateTime dt) =>
+      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+
+  factory _Apt.fromApi(AppointmentModel apt) {
+    final startAt = apt.startAt?.toLocal() ?? DateTime.now();
+
+    final _AptStatus uiStatus;
+    if (apt.isCompleted) {
+      uiStatus = _AptStatus.completed;
+    } else if (apt.isCancelled) {
+      uiStatus = _AptStatus.cancelled;
+    } else {
+      uiStatus = _AptStatus.upcoming;
+    }
+
+    return _Apt(
+      id: apt.id,
+      doctor: apt.doctor?.fullName.isNotEmpty == true
+          ? apt.doctor!.fullName
+          : 'Врач',
+      doctorSlug: apt.doctor?.slug ?? '',
+      specialty: apt.doctor?.specialty ?? '—',
+      date: _formatDate(startAt),
+      dateRaw: DateTime(startAt.year, startAt.month, startAt.day),
+      time: _formatTime(startAt),
+      service: apt.service?.name ?? '—',
+      serviceSlug: apt.service?.slug ?? '',
+      address: 'г. Минск, ул. К. Туровского, 14',
+      phone: '+375 (17) 215 02 89',
+      avatar: apt.doctor?.photoUrl ?? '',
+      status: uiStatus,
+      diagnosis: apt.note?.isNotEmpty == true ? apt.note : null,
+      price: apt.service?.priceLabel ?? '—',
+      canCancel: apt.isUpcoming,
+      canReview: apt.isCompleted,
+      reviewed: false,
+    );
+  }
 }
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const _p1 = 'https://images.unsplash.com/photo-1673865641073-4479f93a7776?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400';
-const _p2 = 'https://images.unsplash.com/photo-1645066928295-2506defde470?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400';
-const _p3 = 'https://images.unsplash.com/photo-1612531386530-97286d97c2d2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400';
-const _p4 = 'https://images.unsplash.com/photo-1659353887804-fc7f9313021a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400';
-const _p5 = 'https://images.unsplash.com/photo-1758691463582-11aea602cd4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400';
-
-final _all = [
-  _Apt(
-    id: 1,
-    doctor: 'Денисевич Юлия Александровна',
-    specialty: 'Акушер-гинеколог',
-    date: 'Сегодня, 3 апреля 2026',
-    dateRaw: DateTime(2026, 4, 3),
-    time: '14:30',
-    room: 'Кабинет 205',
-    address: 'г. Минск, ул. К. Туровского, 14',
-    phone: '+375 (17) 215 02 89',
-    avatar: _p1,
-    status: _AptStatus.upcoming,
-    price: '65,00 BYN',
-    canCancel: true,
-  ),
-  _Apt(
-    id: 2,
-    doctor: 'Сидоров Михаил Андреевич',
-    specialty: 'Кардиолог',
-    date: '10 апреля 2026',
-    dateRaw: DateTime(2026, 4, 10),
-    time: '10:00',
-    room: 'Кабинет 318',
-    address: 'г. Минск, ул. К. Туровского, 14',
-    phone: '+375 (17) 215 02 89',
-    avatar: _p2,
-    status: _AptStatus.upcoming,
-    price: '80,00 BYN',
-    canCancel: true,
-  ),
-  _Apt(
-    id: 3,
-    doctor: 'Новикова Елена Дмитриевна',
-    specialty: 'Невролог',
-    date: '18 апреля 2026',
-    dateRaw: DateTime(2026, 4, 18),
-    time: '09:30',
-    room: 'Кабинет 112',
-    address: 'г. Минск, ул. К. Туровского, 14',
-    phone: '+375 (17) 215 02 89',
-    avatar: _p5,
-    status: _AptStatus.upcoming,
-    price: '70,00 BYN',
-    canCancel: true,
-  ),
-  _Apt(
-    id: 4,
-    doctor: 'Иванов Пётр Сергеевич',
-    specialty: 'Терапевт',
-    date: '20 марта 2026',
-    dateRaw: DateTime(2026, 3, 20),
-    time: '11:00',
-    room: 'Кабинет 101',
-    address: 'г. Минск, ул. К. Туровского, 14',
-    phone: '+375 (17) 215 02 89',
-    avatar: _p2,
-    status: _AptStatus.completed,
-    diagnosis: 'ОРВИ, назначено лечение',
-    price: '55,00 BYN',
-    canReview: true,
-    reviewed: false,
-  ),
-  _Apt(
-    id: 5,
-    doctor: 'Морозов Дмитрий Игоревич',
-    specialty: 'Офтальмолог',
-    date: '5 марта 2026',
-    dateRaw: DateTime(2026, 3, 5),
-    time: '15:45',
-    room: 'Кабинет 209',
-    address: 'г. Минск, ул. К. Туровского, 14',
-    phone: '+375 (17) 215 02 89',
-    avatar: _p4,
-    status: _AptStatus.completed,
-    diagnosis: 'Миопия слабой степени, подбор очков',
-    price: '60,00 BYN',
-    canReview: true,
-    reviewed: true,
-  ),
-  _Apt(
-    id: 6,
-    doctor: 'Козлова Анна Викторовна',
-    specialty: 'Педиатр',
-    date: '12 февраля 2026',
-    dateRaw: DateTime(2026, 2, 12),
-    time: '10:30',
-    room: 'Кабинет 305',
-    address: 'г. Минск, ул. К. Туровского, 14',
-    phone: '+375 (17) 215 02 89',
-    avatar: _p3,
-    status: _AptStatus.completed,
-    diagnosis: 'Профилактический осмотр, здоров',
-    price: '45,00 BYN',
-    canReview: true,
-    reviewed: true,
-  ),
-  _Apt(
-    id: 7,
-    doctor: 'Волкова Ольга Николаевна',
-    specialty: 'Дерматолог',
-    date: '28 января 2026',
-    dateRaw: DateTime(2026, 1, 28),
-    time: '13:00',
-    room: 'Кабинет 214',
-    address: 'г. Минск, ул. К. Туровского, 14',
-    phone: '+375 (17) 215 02 89',
-    avatar: _p5,
-    status: _AptStatus.cancelled,
-    price: '70,00 BYN',
-  ),
-];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -208,38 +149,71 @@ const _cfgMap = {
   ),
 };
 
-String? _daysUntil(DateTime d) {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final diff = d.difference(today).inDays;
-  if (diff == 0) return 'Сегодня';
-  if (diff == 1) return 'Завтра';
-  if (diff > 1) return 'Через $diff дн.';
-  return null;
+/// Повторная запись к тому же врачу на ту же услугу (визард: дата → слот → подтверждение).
+String _bookAgainBookingPath(_Apt apt) {
+  final q = <String, String>{};
+  if (apt.doctorSlug.isNotEmpty) q['doctor'] = apt.doctorSlug;
+  if (apt.serviceSlug.isNotEmpty) q['service'] = apt.serviceSlug;
+  if (q.isEmpty) return '/booking';
+  return Uri(path: '/booking', queryParameters: q).toString();
 }
+
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
-class AppointmentsScreen extends StatefulWidget {
+class AppointmentsScreen extends ConsumerStatefulWidget {
   const AppointmentsScreen({super.key});
 
   @override
-  State<AppointmentsScreen> createState() => _AppointmentsScreenState();
+  ConsumerState<AppointmentsScreen> createState() => _AppointmentsScreenState();
 }
 
-class _AppointmentsScreenState extends State<AppointmentsScreen> {
+class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
   bool _showUpcoming = true;
   _Apt? _selected;
-
-  List<_Apt> get _upcoming => _all.where((a) => a.status == _AptStatus.upcoming).toList();
-  List<_Apt> get _past => _all.where((a) => a.status != _AptStatus.upcoming).toList();
-  List<_Apt> get _list => _showUpcoming ? _upcoming : _past;
 
   void _openDetail(_Apt apt) => setState(() => _selected = apt);
   void _closeDetail() => setState(() => _selected = null);
 
+  Future<void> _refresh() async {
+    ref.invalidate(upcomingAppointmentsProvider);
+    ref.invalidate(pastAppointmentsProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<AppointmentModel?>(appointmentsPendingDetailProvider,
+        (previous, next) {
+      if (next == null) return;
+      final model = next;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(appointmentsPendingDetailProvider.notifier).state = null;
+        setState(() {
+          _showUpcoming = model.isUpcoming;
+          _selected = _Apt.fromApi(model);
+        });
+      });
+    });
+
+    // Автообновление при переходе на вкладку «Записи» (индекс 3)
+    ref.listen<int>(dashboardTabIndexProvider, (previous, current) {
+      if (current == 3 && previous != 3) {
+        _refresh();
+      }
+    });
+
+    final upcomingAsync = ref.watch(upcomingAppointmentsProvider);
+    final pastAsync = ref.watch(pastAppointmentsProvider);
+
+    final upcomingList =
+        upcomingAsync.valueOrNull?.map(_Apt.fromApi).toList() ?? [];
+    final pastList =
+        pastAsync.valueOrNull?.map(_Apt.fromApi).toList() ?? [];
+
+    final currentAsync = _showUpcoming ? upcomingAsync : pastAsync;
+    final currentList = _showUpcoming ? upcomingList : pastList;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FC),
       body: SafeArea(
@@ -250,23 +224,42 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               children: [
                 // ── Header ──
                 _Header(
-                  upcomingCount: _upcoming.length,
-                  pastCount: _past.length,
+                  upcomingCount: upcomingList.length,
+                  pastCount: pastList.length,
                   showUpcoming: _showUpcoming,
-                  onTabChanged: (v) => setState(() => _showUpcoming = v),
+                  onTabChanged: (v) => setState(() {
+                    _showUpcoming = v;
+                    _selected = null;
+                  }),
                 ),
 
                 // ── List ──
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 220),
-                    child: _ListBody(
-                      key: ValueKey(_showUpcoming),
-                      list: _list,
-                      showUpcoming: _showUpcoming,
-                      upcoming: _upcoming,
-                      past: _past,
-                      onSelect: _openDetail,
+                    child: currentAsync.when(
+                      loading: () => const Center(
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      error: (err, _) => _ErrorState(
+                        onRetry: _refresh,
+                      ),
+                      data: (_) => _ListBody(
+                        key: ValueKey(_showUpcoming),
+                        list: currentList,
+                        showUpcoming: _showUpcoming,
+                        upcoming: upcomingList,
+                        past: pastList,
+                        onSelect: _openDetail,
+                        onRefresh: _refresh,
+                      ),
                     ),
                   ),
                 ),
@@ -285,6 +278,58 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               ),
               _DetailSheet(apt: _selected!, onClose: _closeDetail),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Error State ──────────────────────────────────────────────────────────────
+
+class _ErrorState extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _ErrorState({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFDE8E8),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Icon(Icons.cloud_off_outlined,
+                  size: 32, color: Color(0xFFD94F4F)),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Не удалось загрузить записи',
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF222222),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(
+                'Повторить',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -316,34 +361,27 @@ class _Header extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Мои записи',
-                        style: GoogleFonts.inter(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF101623),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        upcomingCount > 0
-                            ? '$upcomingCount предстоящих · $pastCount завершённых'
-                            : 'Нет предстоящих записей',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: const Color(0xFFA0AABF),
-                        ),
-                      ),
-                    ],
+                Text(
+                  'Мои записи',
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF101623),
                   ),
                 ),
-                _BookButton(),
+                const SizedBox(height: 2),
+                Text(
+                  upcomingCount > 0
+                      ? '$upcomingCount предстоящих · $pastCount завершённых'
+                      : 'Нет предстоящих записей',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFFA0AABF),
+                  ),
+                ),
               ],
             ),
           ),
@@ -446,44 +484,6 @@ class _Tab extends StatelessWidget {
   }
 }
 
-class _BookButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 36,
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withAlpha(77),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextButton.icon(
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18)),
-        ),
-        icon: const Icon(Icons.calendar_today_outlined,
-            size: 14, color: Colors.white),
-        label: Text(
-          'Записаться',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        onPressed: () {},
-      ),
-    );
-  }
-}
-
 // ─── List Body ────────────────────────────────────────────────────────────────
 
 class _ListBody extends StatelessWidget {
@@ -492,6 +492,7 @@ class _ListBody extends StatelessWidget {
   final List<_Apt> upcoming;
   final List<_Apt> past;
   final ValueChanged<_Apt> onSelect;
+  final Future<void> Function()? onRefresh;
 
   const _ListBody({
     super.key,
@@ -500,17 +501,21 @@ class _ListBody extends StatelessWidget {
     required this.upcoming,
     required this.past,
     required this.onSelect,
+    this.onRefresh,
   });
 
   @override
   Widget build(BuildContext context) {
     if (list.isEmpty) {
-      return _EmptyState(isUpcoming: showUpcoming);
+      return _EmptyRefreshable(
+        isUpcoming: showUpcoming,
+        onRefresh: onRefresh,
+      );
     }
 
     final bottomPad = MediaQuery.of(context).padding.bottom + 80;
-    return ListView(
-      physics: const ClampingScrollPhysics(),
+    final listView = ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad),
       children: [
         if (showUpcoming && upcoming.isNotEmpty) ...[
@@ -544,6 +549,15 @@ class _ListBody extends StatelessWidget {
             )),
       ],
     );
+
+    if (onRefresh != null) {
+      return RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: onRefresh!,
+        child: listView,
+      );
+    }
+    return listView;
   }
 }
 
@@ -555,7 +569,6 @@ class _NextHighlight extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badge = _daysUntil(apt.dateRaw);
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.primaryGradient,
@@ -627,7 +640,7 @@ class _NextHighlight extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${apt.time} · ${apt.room}',
+                  '${apt.time} · ${apt.service}',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: Colors.white.withAlpha(204),
@@ -636,29 +649,6 @@ class _NextHighlight extends StatelessWidget {
               ],
             ),
           ),
-          if (badge != null)
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withAlpha(38),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              child: Column(
-                children: [
-                  const Icon(Icons.access_time_outlined,
-                      size: 14, color: Colors.white),
-                  const SizedBox(height: 3),
-                  Text(
-                    badge,
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     ).animate().fadeIn(duration: 300.ms).moveY(begin: 12, end: 0);
@@ -689,10 +679,12 @@ class _AptCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cfg = _cfgMap[apt.status]!;
-    final badge = apt.status == _AptStatus.upcoming
-        ? _daysUntil(apt.dateRaw)
-        : null;
-    final isToday = badge == 'Сегодня';
+    final isToday = apt.status == _AptStatus.upcoming &&
+        apt.dateRaw == DateTime(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+        );
 
     return GestureDetector(
       onTap: onTap,
@@ -717,7 +709,7 @@ class _AptCard extends StatelessWidget {
             ),
           ],
         ),
-        child:           ClipRRect(
+        child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -727,7 +719,7 @@ class _AptCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Дата (полностью, с переносом) + статус
+                    // Дата + статус
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -779,7 +771,8 @@ class _AptCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 100),
+                                constraints:
+                                    const BoxConstraints(maxWidth: 100),
                                 child: Text(
                                   cfg.label,
                                   maxLines: 1,
@@ -803,20 +796,17 @@ class _AptCard extends StatelessWidget {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(15),
-                          child: Image.network(
-                            apt.avatar,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            alignment: Alignment.topCenter,
-                            errorBuilder: (_, _, _) => Container(
-                              width: 50,
-                              height: 50,
-                              color: const Color(0xFFE8F4FD),
-                              child: const Icon(Icons.person,
-                                  color: AppColors.primary),
-                            ),
-                          ),
+                          child: apt.avatar.isNotEmpty
+                              ? Image.network(
+                                  apt.avatar,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.topCenter,
+                                  errorBuilder: (_, _, _) =>
+                                      _AvatarPlaceholder(size: 50),
+                                )
+                              : _AvatarPlaceholder(size: 50),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -863,35 +853,6 @@ class _AptCard extends StatelessWidget {
                             child: Row(
                               children: [
                                 const Icon(
-                                  Icons.room_outlined,
-                                  size: 12,
-                                  color: Color(0xFFA0AABF),
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    apt.room,
-                                    maxLines: 1,
-                                    softWrap: false,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11,
-                                      color: const Color(0xFFA0AABF),
-                                      height: 1.2,
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                                  child: Text(
-                                    '·',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11,
-                                      color: const Color(0xFFC8D0DA),
-                                    ),
-                                  ),
-                                ),
-                                const Icon(
                                   Icons.access_time_outlined,
                                   size: 12,
                                   color: Color(0xFFA0AABF),
@@ -910,31 +871,6 @@ class _AptCard extends StatelessWidget {
                               ],
                             ),
                           ),
-                          if (badge != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 9, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: badge == 'Сегодня'
-                                    ? const Color(0xFFFDE8E8)
-                                    : badge == 'Завтра'
-                                        ? const Color(0xFFFDF5E8)
-                                        : const Color(0xFFF4F7FB),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                badge,
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: badge == 'Сегодня'
-                                      ? const Color(0xFFD94F4F)
-                                      : badge == 'Завтра'
-                                          ? const Color(0xFFD98C3A)
-                                          : const Color(0xFF717784),
-                                ),
-                              ),
-                            ),
                           if (apt.status == _AptStatus.completed && apt.reviewed)
                             Row(
                               children: List.generate(
@@ -950,13 +886,6 @@ class _AptCard extends StatelessWidget {
                               style: GoogleFonts.inter(
                                   fontSize: 11,
                                   color: const Color(0xFFA0AABF)),
-                            ),
-                          if (apt.status == _AptStatus.cancelled)
-                            Text(
-                              'Отменено пациентом',
-                              style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  color: const Color(0xFFD94F4F)),
                             ),
                           const SizedBox(width: 8),
                           Text(
@@ -984,7 +913,47 @@ class _AptCard extends StatelessWidget {
   }
 }
 
-// ─── Empty State ─────────────────────────────────────────────────────────────
+// ─── Avatar Placeholder ───────────────────────────────────────────────────────
+
+class _AvatarPlaceholder extends StatelessWidget {
+  final double size;
+  const _AvatarPlaceholder({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      color: const Color(0xFFE8F4FD),
+      child: Icon(Icons.person, color: AppColors.primary, size: size * 0.5),
+    );
+  }
+}
+
+// ─── Empty State (with pull-to-refresh support) ───────────────────────────────
+
+class _EmptyRefreshable extends StatelessWidget {
+  final bool isUpcoming;
+  final Future<void> Function()? onRefresh;
+  const _EmptyRefreshable({required this.isUpcoming, this.onRefresh});
+
+  @override
+  Widget build(BuildContext context) {
+    final content = _EmptyState(isUpcoming: isUpcoming);
+    if (onRefresh == null) return content;
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: onRefresh!,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: content,
+        ),
+      ),
+    );
+  }
+}
 
 class _EmptyState extends StatelessWidget {
   final bool isUpcoming;
@@ -1052,7 +1021,7 @@ class _EmptyState extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24)),
                   ),
-                  onPressed: () {},
+                  onPressed: () => context.push('/booking'),
                   child: Text(
                     'Записаться к врачу',
                     style: GoogleFonts.inter(
@@ -1073,20 +1042,21 @@ class _EmptyState extends StatelessWidget {
 
 // ─── Detail Sheet ─────────────────────────────────────────────────────────────
 
-class _DetailSheet extends StatefulWidget {
+class _DetailSheet extends ConsumerStatefulWidget {
   final _Apt apt;
   final VoidCallback onClose;
 
   const _DetailSheet({required this.apt, required this.onClose});
 
   @override
-  State<_DetailSheet> createState() => _DetailSheetState();
+  ConsumerState<_DetailSheet> createState() => _DetailSheetState();
 }
 
-class _DetailSheetState extends State<_DetailSheet>
+class _DetailSheetState extends ConsumerState<_DetailSheet>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<Offset> _slide;
+  bool _cancelling = false;
 
   @override
   void initState() {
@@ -1111,13 +1081,45 @@ class _DetailSheetState extends State<_DetailSheet>
     super.dispose();
   }
 
+  Future<void> _showCancelSheet() async {
+    final result = await showModalBottomSheet<Object>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CancelConfirmSheet(aptId: widget.apt.id),
+    );
+    if (result == null || !mounted) return;
+
+    final reason = result is String ? result : null;
+
+    setState(() => _cancelling = true);
+    try {
+      await ref
+          .read(appointmentsRepositoryProvider)
+          .cancelAppointment(widget.apt.id, reason: reason);
+      ref.invalidate(upcomingAppointmentsProvider);
+      ref.invalidate(pastAppointmentsProvider);
+      if (mounted) widget.onClose();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _cancelling = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Не удалось отменить запись. Попробуйте ещё раз.',
+            style: GoogleFonts.inter(fontSize: 13),
+          ),
+          backgroundColor: const Color(0xFFE05252),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final apt = widget.apt;
     final cfg = _cfgMap[apt.status]!;
-    final badge = apt.status == _AptStatus.upcoming
-        ? _daysUntil(apt.dateRaw)
-        : null;
 
     return Positioned(
       bottom: 0,
@@ -1160,8 +1162,7 @@ class _DetailSheetState extends State<_DetailSheet>
 
               // Sheet header
               Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(20, 0, 20, 14),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                 child: Row(
                   children: [
                     Expanded(
@@ -1193,8 +1194,7 @@ class _DetailSheetState extends State<_DetailSheet>
 
               Flexible(
                 child: SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1211,21 +1211,17 @@ class _DetailSheetState extends State<_DetailSheet>
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(16),
-                              child: Image.network(
-                                apt.avatar,
-                                width: 56,
-                                height: 56,
-                                fit: BoxFit.cover,
-                                alignment: Alignment.topCenter,
-                                errorBuilder: (_, _, _) =>
-                                    Container(
-                                  width: 56,
-                                  height: 56,
-                                  color: const Color(0xFFE8F4FD),
-                                  child: const Icon(Icons.person,
-                                      color: AppColors.primary),
-                                ),
-                              ),
+                              child: apt.avatar.isNotEmpty
+                                  ? Image.network(
+                                      apt.avatar,
+                                      width: 56,
+                                      height: 56,
+                                      fit: BoxFit.cover,
+                                      alignment: Alignment.topCenter,
+                                      errorBuilder: (_, _, _) =>
+                                          _AvatarPlaceholder(size: 56),
+                                    )
+                                  : _AvatarPlaceholder(size: 56),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
@@ -1253,9 +1249,8 @@ class _DetailSheetState extends State<_DetailSheet>
                                   ),
                                   const SizedBox(height: 6),
                                   Container(
-                                    padding:
-                                        const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 3),
                                     decoration: BoxDecoration(
                                       color: cfg.bg,
                                       borderRadius:
@@ -1308,9 +1303,14 @@ class _DetailSheetState extends State<_DetailSheet>
                               value: apt.time,
                             ),
                             _DetailRow(
+                              icon: Icons.medical_services_outlined,
+                              label: 'Услуга',
+                              value: apt.service,
+                            ),
+                            _DetailRow(
                               icon: Icons.room_outlined,
-                              label: 'Кабинет',
-                              value: '${apt.room}, ${apt.address}',
+                              label: 'Адрес',
+                              value: apt.address,
                             ),
                             _DetailRow(
                               icon: Icons.phone_outlined,
@@ -1325,7 +1325,7 @@ class _DetailSheetState extends State<_DetailSheet>
                             if (apt.diagnosis != null)
                               _DetailRow(
                                 icon: Icons.local_hospital_outlined,
-                                label: 'Диагноз',
+                                label: 'Примечание',
                                 value: apt.diagnosis!,
                                 isLast: true,
                               ),
@@ -1334,59 +1334,31 @@ class _DetailSheetState extends State<_DetailSheet>
                       ),
                       const SizedBox(height: 14),
 
-                      // Badge for upcoming
-                      if (apt.status == _AptStatus.upcoming && badge != null)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 14),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFE8F4FD),
-                                Color(0xFFD0E8F8)
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                                color: const Color(0xFFC8D8E8)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.access_time_outlined,
-                                size: 16,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                badge,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primaryDark,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
                       // Actions
                       if (apt.status == _AptStatus.upcoming) ...[
                         _ActionButton(
                           label: 'Перенести запись',
+                          icon: Icons.event_repeat_outlined,
                           gradient: AppColors.primaryGradient,
                           textColor: Colors.white,
-                          onTap: () {},
+                          onTap: () {
+                            widget.onClose();
+                            context.push(
+                              '/booking'
+                              '?service=${widget.apt.serviceSlug}'
+                              '&doctor=${widget.apt.doctorSlug}'
+                              '&appointmentId=${widget.apt.id}',
+                            );
+                          },
                         ),
                         const SizedBox(height: 10),
                         if (apt.canCancel)
                           _ActionButton(
-                            label: 'Отменить запись',
+                            label: _cancelling ? 'Отмена...' : 'Отменить запись',
                             gradient: null,
                             textColor: const Color(0xFFE05252),
                             border: const Color(0xFFE05252),
-                            onTap: () {},
+                            onTap: _cancelling ? null : () => _showCancelSheet(),
                           ),
                       ],
                       if (apt.status == _AptStatus.completed &&
@@ -1399,6 +1371,10 @@ class _DetailSheetState extends State<_DetailSheet>
                           textColor: Colors.white,
                           onTap: () {},
                         ),
+                      if (apt.status == _AptStatus.completed &&
+                          apt.canReview &&
+                          !apt.reviewed)
+                        const SizedBox(height: 10),
                       if (apt.status == _AptStatus.completed && apt.reviewed)
                         Container(
                           height: 50,
@@ -1409,8 +1385,7 @@ class _DetailSheetState extends State<_DetailSheet>
                                 color: const Color(0xFFC0EDD5)),
                           ),
                           child: Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Icon(
                                 Icons.check_circle_outline,
@@ -1429,13 +1404,29 @@ class _DetailSheetState extends State<_DetailSheet>
                             ],
                           ),
                         ),
+                      if (apt.status == _AptStatus.completed && apt.reviewed)
+                        const SizedBox(height: 10),
+                      if (apt.status == _AptStatus.completed)
+                        _ActionButton(
+                          label: 'Записаться снова',
+                          icon: Icons.refresh_outlined,
+                          gradient: AppColors.primaryGradient,
+                          textColor: Colors.white,
+                          onTap: () {
+                            widget.onClose();
+                            context.push(_bookAgainBookingPath(apt));
+                          },
+                        ),
                       if (apt.status == _AptStatus.cancelled)
                         _ActionButton(
                           label: 'Записаться снова',
                           icon: Icons.refresh_outlined,
                           gradient: AppColors.primaryGradient,
                           textColor: Colors.white,
-                          onTap: () {},
+                          onTap: () {
+                            widget.onClose();
+                            context.push(_bookAgainBookingPath(apt));
+                          },
                         ),
                     ],
                   ),
@@ -1528,7 +1519,7 @@ class _ActionButton extends StatelessWidget {
   final LinearGradient? gradient;
   final Color textColor;
   final Color? border;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _ActionButton({
     required this.label,
@@ -1548,7 +1539,8 @@ class _ActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: gradient,
           borderRadius: BorderRadius.circular(25),
-          border: border != null ? Border.all(color: border!, width: 1.5) : null,
+          border:
+              border != null ? Border.all(color: border!, width: 1.5) : null,
           boxShadow: gradient != null
               ? [
                   BoxShadow(
@@ -1576,6 +1568,182 @@ class _ActionButton extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Cancel Confirmation Sheet ────────────────────────────────────────────────
+
+class _CancelConfirmSheet extends StatefulWidget {
+  final int aptId;
+  const _CancelConfirmSheet({required this.aptId});
+
+  @override
+  State<_CancelConfirmSheet> createState() => _CancelConfirmSheetState();
+}
+
+class _CancelConfirmSheetState extends State<_CancelConfirmSheet> {
+  final _reasonCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _reasonCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 24 + bottom),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0E7EF),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDE8E8),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.cancel_outlined,
+                    size: 20, color: Color(0xFFE05252)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Отменить запись?',
+                  style: GoogleFonts.inter(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF101623),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Это действие нельзя отменить. Вы можете записаться снова в любое время.',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: const Color(0xFF717784),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _reasonCtrl,
+            maxLines: 2,
+            maxLength: 500,
+            decoration: InputDecoration(
+              hintText: 'Причина отмены (необязательно)',
+              hintStyle: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFFA0AABF),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF7F9FC),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFEEF2F7)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFEEF2F7)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide:
+                    BorderSide(color: AppColors.primary.withAlpha(180)),
+              ),
+              counterStyle: GoogleFonts.inter(
+                  fontSize: 11, color: const Color(0xFFA0AABF)),
+            ),
+            style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF222222)),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(false),
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4F8FB),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Назад',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF717784),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context)
+                      .pop(_reasonCtrl.text.trim().isNotEmpty
+                          ? _reasonCtrl.text.trim()
+                          : true),
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE05252),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFE05252).withAlpha(80),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Подтвердить',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

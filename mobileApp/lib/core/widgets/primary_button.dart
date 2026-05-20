@@ -23,8 +23,10 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: isEnabled ? onTap : null,
       child: AnimatedContainer(
+        width: double.infinity,
         duration: const Duration(milliseconds: 200),
         height: height,
         decoration: BoxDecoration(

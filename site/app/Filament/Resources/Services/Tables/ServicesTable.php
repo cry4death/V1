@@ -32,6 +32,12 @@ class ServicesTable
                     ->suffix(' BYN')
                     ->sortable(),
 
+                TextColumn::make('duration_minutes')
+                    ->label('Мин.')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(),
+
                 TextColumn::make('status')
                     ->label('Статус')
                     ->badge()

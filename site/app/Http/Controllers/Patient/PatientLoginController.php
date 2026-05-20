@@ -72,7 +72,7 @@ class PatientLoginController extends Controller
         Auth::guard('patient')->login($patient);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('booking.index'))
+        return redirect()->intended(route('cabinet.dashboard'))
             ->with('status', 'Вы вошли.');
     }
 }

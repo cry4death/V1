@@ -68,11 +68,13 @@
     overflow: hidden;
 }
 
-/* Картинка на всю ширину, высота — по пропорциям; без обрезки и без полос по бокам */
+/* Картинка на всю ширину и высоту слайдера, центрируется */
 .promo-slide img {
     display: block;
     width: 100%;
-    height: auto;
+    height: 500px;
+    object-fit: cover;
+    object-position: center center;
     transition: transform 0.35s ease;
 }
 
@@ -242,6 +244,10 @@
         max-height: 400px;
     }
 
+    .promo-slide img {
+        height: 400px;
+    }
+
     .promo-slide-title {
         font-size: 1.5rem;
     }
@@ -276,6 +282,10 @@
 
     .promo-slider-viewport {
         max-height: 320px;
+    }
+
+    .promo-slide img {
+        height: 320px;
     }
 
     .promo-slide-content {
@@ -318,6 +328,10 @@
 
     .promo-slider-viewport {
         max-height: 240px;
+    }
+
+    .promo-slide img {
+        height: 240px;
     }
 
     .promo-slide-title {

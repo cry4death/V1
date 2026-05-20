@@ -1,98 +1,14 @@
 (function () {
   'use strict';
 
-  function syncCategoryHash(id) {
-    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    var nextHash = id ? '#' + id : '';
-
-    if (currentPage !== 'medical-services-page.html') return;
-
-    if (window.location.hash !== nextHash) {
-      if (window.history && window.history.replaceState) {
-        window.history.replaceState(null, '', window.location.pathname + window.location.search + nextHash);
-      } else {
-        window.location.hash = id;
-      }
-    }
-
-    if (typeof window.updateHeaderActiveNav === 'function') {
-      window.updateHeaderActiveNav();
-    }
-  }
-
-  function switchCategory(id, options) {
-    options = options || {};
-
-    document.querySelectorAll('.services-nav-item').forEach(function (item) {
-      var isActive = item.dataset.categoryId === id;
-      item.classList.toggle('active', isActive);
-      item.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-    });
-
-    document.querySelectorAll('.services-tab').forEach(function (tab) {
-      var isActive = tab.dataset.categoryId === id;
-      tab.classList.toggle('active', isActive);
-      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    });
-
-    document.querySelectorAll('.services-panel').forEach(function (panel) {
-      panel.classList.remove('panel-animate');
-      var isVisible = panel.dataset.categoryId === id;
-      panel.hidden = !isVisible;
-      if (isVisible) {
-        void panel.offsetWidth;
-        panel.classList.add('panel-animate');
-      }
-    });
-
-    if (options.persistHash) {
-      syncCategoryHash(id);
-    }
-  }
-
-  function scrollToContentArea(el) {
-    if (!el) return;
-    var header = document.querySelector('header');
-    var offset = header ? header.offsetHeight : 80;
-    var top = el.getBoundingClientRect().top + window.pageYOffset;
-    window.scrollTo({ top: top - offset, behavior: 'smooth' });
-  }
-
-  function getPanelScrollTarget(categoryId) {
-    var panel = document.querySelector('.services-panel[data-category-id="' + categoryId + '"]');
-    if (!panel) return document.querySelector('.services-content');
-    var hero = panel.querySelector('.category-detail-hero');
-    return hero || panel;
-  }
-
-  function bindEvents() {
-    var navEl = document.querySelector('.services-nav');
-    var tabsWrap = document.querySelector('.services-tabs-wrap');
-    var contentEl = document.querySelector('.services-content');
-
-    if (navEl) {
-      navEl.addEventListener('click', function (e) {
-        var item = e.target.closest('.services-nav-item');
-        if (!item) return;
-        switchCategory(item.dataset.categoryId, { persistHash: true });
-        scrollToContentArea(contentEl);
-      });
-    }
-
-    if (tabsWrap) {
-      tabsWrap.addEventListener('click', function (e) {
-        var tab = e.target.closest('.services-tab');
-        if (!tab) return;
-        switchCategory(tab.dataset.categoryId, { persistHash: true });
-        scrollToContentArea(getPanelScrollTarget(tab.dataset.categoryId));
-      });
-    }
-
+  /* ── "Показать ещё" для списка услуг ─────────────────────────────────── */
+  function bindShowMore() {
     document.addEventListener('click', function (e) {
       var btn = e.target.closest('.category-more-btn');
       if (!btn) return;
       var list = btn.previousElementSibling;
       if (!list) return;
+
       var hidden = list.querySelectorAll('.category-service-row-hidden');
       if (hidden.length) {
         var toShow = Math.min(5, hidden.length);
@@ -104,12 +20,14 @@
         }
         return;
       }
+
       var hiddenPromos = list.querySelectorAll('.category-promo-card-hidden');
       if (hiddenPromos.length) {
         hiddenPromos.forEach(function (el) { el.classList.remove('category-promo-card-hidden'); });
         btn.hidden = true;
         return;
       }
+
       var hiddenDoctors = list.querySelectorAll('.category-doctor-card-hidden');
       if (hiddenDoctors.length) {
         hiddenDoctors.forEach(function (el) { el.classList.remove('category-doctor-card-hidden'); });
@@ -119,98 +37,7 @@
     });
   }
 
-  function initShowMoreForGrids() {
-    var PROMO_LIMIT = 3;
-    var DOCTOR_LIMIT = 3;
-
-    document.querySelectorAll('.category-detail-promos').forEach(function (block) {
-      var cards = block.querySelectorAll('.promo-card');
-      if (cards.length === 0) {
-        block.hidden = true;
-      }
-    });
-
-    document.querySelectorAll('.category-promos-grid').forEach(function (grid) {
-      var cards = grid.querySelectorAll('.promo-card');
-      if (cards.length <= PROMO_LIMIT) return;
-      for (var i = PROMO_LIMIT; i < cards.length; i++) {
-        cards[i].classList.add('category-promo-card-hidden');
-      }
-      var btn = grid.parentElement.querySelector('.category-promos-more-btn');
-      if (btn) btn.hidden = false;
-    });
-
-    document.querySelectorAll('.category-doctors-grid').forEach(function (grid) {
-      var cards = grid.querySelectorAll('.doctor-card');
-      if (cards.length <= DOCTOR_LIMIT) return;
-      for (var i = DOCTOR_LIMIT; i < cards.length; i++) {
-        cards[i].classList.add('category-doctor-card-hidden');
-      }
-      var btn = grid.parentElement.querySelector('.category-doctors-more-btn');
-      if (btn) btn.hidden = false;
-    });
-  }
-
-  function loadPromosFromPage() {
-    fetch('promotions-page.html')
-      .then(function (res) { return res.text(); })
-      .then(function (html) {
-        var doc = new DOMParser().parseFromString(html, 'text/html');
-        var allCards = doc.querySelectorAll('.promo-card[data-category]');
-
-        var grouped = {};
-        allCards.forEach(function (card) {
-          var cat = card.dataset.category.trim();
-          if (!grouped[cat]) grouped[cat] = [];
-          grouped[cat].push(card);
-        });
-
-        document.querySelectorAll('.services-panel').forEach(function (panel) {
-          var titleEl = panel.querySelector('.services-category-title') ||
-                        panel.querySelector('.category-detail-hero-title');
-          if (!titleEl) return;
-          var categoryName = titleEl.textContent.trim();
-          var cards = grouped[categoryName];
-          if (!cards || cards.length === 0) return;
-
-          var block = document.createElement('div');
-          block.className = 'category-detail-promos';
-
-          var heading = document.createElement('h3');
-          heading.className = 'category-detail-section-title';
-          heading.textContent = 'Акции по направлению';
-          block.appendChild(heading);
-
-          var grid = document.createElement('div');
-          grid.className = 'category-promos-grid';
-          cards.forEach(function (card) {
-            var clone = card.cloneNode(true);
-            clone.classList.remove('animate-on-scroll');
-            grid.appendChild(clone);
-          });
-          block.appendChild(grid);
-
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'category-more-btn category-promos-more-btn';
-          btn.hidden = true;
-          btn.textContent = 'Показать ещё';
-          block.appendChild(btn);
-
-          var ref = panel.querySelector('.category-detail-services') ||
-                    panel.querySelector('.category-services-list');
-          if (ref) {
-            ref.parentNode.insertBefore(block, ref);
-          }
-        });
-
-        initShowMoreForGrids();
-      })
-      .catch(function (err) {
-        console.warn('Failed to load promotions:', err);
-      });
-  }
-
+  /* ── FAQ данные (для направлений без DB-FAQ) ──────────────────────────── */
   var CATEGORY_FAQ_DATA = {
     endokrinologiya: [
       { q: 'Как часто нужно посещать эндокринолога?', a: 'При отсутствии жалоб рекомендуется профилактический осмотр раз в год. Пациентам с хроническими заболеваниями (сахарный диабет, патологии щитовидной железы) — каждые 3–6 месяцев по назначению врача.' },
@@ -311,6 +138,7 @@
     ]
   };
 
+  /* ── Инжект FAQ из JS-данных (только если в Blade нет FAQ) ────────────── */
   function injectCategoryFaq() {
     document.querySelectorAll('.services-panel').forEach(function (panel) {
       if (panel.querySelector('.category-faq-section')) return;
@@ -366,6 +194,7 @@
     });
   }
 
+  /* ── Аккордеон FAQ ────────────────────────────────────────────────────── */
   function bindCategoryAccordion() {
     document.addEventListener('click', function (e) {
       var header = e.target.closest('.category-faq-list .accordion-header');
@@ -396,40 +225,9 @@
     });
   }
 
+  /* ── Инит ─────────────────────────────────────────────────────────────── */
   function init() {
-    var firstPanel = document.querySelector('.services-panel');
-    var startId = firstPanel ? firstPanel.dataset.categoryId : '';
-
-    function applyHashCategory() {
-      var hash = location.hash.replace('#', '');
-
-      if (hash && document.querySelector('.services-panel[data-category-id="' + hash + '"]')) {
-        switchCategory(hash);
-        return true;
-      }
-
-      return false;
-    }
-
-    var initialHash = location.hash.replace('#', '');
-    if (!applyHashCategory() && startId) {
-      switchCategory(startId);
-    } else if (initialHash) {
-      setTimeout(function () {
-        scrollToContentArea(getPanelScrollTarget(initialHash));
-      }, 150);
-    }
-
-    window.addEventListener('hashchange', function () {
-      var hash = location.hash.replace('#', '');
-      if (applyHashCategory()) {
-        scrollToContentArea(getPanelScrollTarget(hash));
-      }
-    });
-
-    bindEvents();
-    initShowMoreForGrids();
-    loadPromosFromPage();
+    bindShowMore();
     injectCategoryFaq();
     bindCategoryAccordion();
   }

@@ -5,7 +5,7 @@
 @section('body_class', 'search-page')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('styles/style-search-page.css') }}?v=4">
+    <link rel="stylesheet" href="{{ asset('styles/style-search-page.css') }}?v=6">
 @endpush
 
 @php

@@ -63,7 +63,7 @@ extension PromotionModelDisplayX on PromotionModel {
     final u = imageUrl.trim();
     if (u.isEmpty) return '';
     if (u.startsWith('http://') || u.startsWith('https://')) return u;
-    final origin = Uri.parse(kApiBaseUrl).origin;
+    final origin = Uri.parse(resolvedApiBaseUrl).origin;
     if (u.startsWith('/')) return '$origin$u';
     return '$origin/$u';
   }

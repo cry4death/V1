@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/notifications/providers.dart';
+import '../features/auth/domain/auth_state.dart';
+import '../features/auth/presentation/controllers/auth_controller.dart';
 import 'router.dart';
 
 class App extends ConsumerWidget {
@@ -10,6 +13,21 @@ class App extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Запускаем FCM-сервис и показ foreground-уведомлений через local notifications
+    ref.watch(notificationControllerProvider);
+
+    // Синхронизируем FCM-токен сразу при старте (анонимно, до логина)
+    ref.watch(pushTokenSyncProvider);
+
+    // После успешного входа (PIN / Face ID / OTP) — отправляем токен снова,
+    // теперь уже с действующим Authorization-заголовком
+    ref.listen<AuthState>(authControllerProvider, (previous, current) {
+      if (current.status == AuthStatus.authenticated &&
+          previous?.status != AuthStatus.authenticated) {
+        ref.read(pushTokenSyncProvider).resendAfterLogin();
+      }
+    });
+
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
