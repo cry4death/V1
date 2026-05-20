@@ -26,6 +26,72 @@
 | google_fonts | UI-файлы | шрифт Inter |
 | flutter_animate | экраны | плавные появления, слайды, анимации |
 
+### 2.1. Как думать об этом проекте новичку
+
+Удобно представить приложение как несколько слоёв. Каждый слой отвечает только за свою часть работы. Это очень важно: если всё смешать в одном файле, проект быстро станет нечитаемым.
+
+```text
+Пользователь нажимает кнопку
+→ Widget получает событие onTap / onChanged
+→ Widget вызывает controller или notifier
+→ Controller меняет state или вызывает repository
+→ Repository делает HTTP-запрос через Dio
+→ Dio автоматически добавляет token и обрабатывает ошибки
+→ Backend возвращает JSON
+→ Model.fromJson превращает JSON в Dart-объект
+→ Provider уведомляет экран
+→ Flutter перерисовывает только нужную часть UI
+```
+
+Главное правило чтения Flutter-кода: **экран почти всегда описывает не “как нарисовать пиксели”, а “из каких виджетов состоит интерфейс и что делать при событиях”**. Например, кнопка не сама знает, как регистрировать пользователя. Она вызывает метод controller/repository, а дальше работу выполняют другие слои.
+
+### 2.2. Почему тут Riverpod, а не просто setState
+
+`setState` хорошо подходит для маленькой локальной логики внутри одного экрана: например, показать ошибку под полем или обновить введённый текст. Но в этом приложении много состояния, которое нужно разным экранам:
+
+- авторизован пользователь или нет;
+- какой активен tab в dashboard;
+- какие данные профиля сохранены;
+- какие записи нужно обновить после создания новой записи;
+- какой врач или категория должны открыться после перехода с главной.
+
+Для такого состояния используется Riverpod. Он позволяет вынести данные из конкретного виджета в provider. Тогда один экран может изменить provider, а другой экран автоматически увидит новое значение.
+
+Пример из dashboard:
+
+```dart
+final currentIndex = ref.watch(dashboardTabIndexProvider);
+
+ref.read(dashboardTabIndexProvider.notifier).state = 3;
+```
+
+Первая строка читает текущую вкладку. Вторая строка меняет вкладку на «Записи». Из-за `ref.watch` UI перерисуется.
+
+### 2.3. Почему тут GoRouter, а не Navigator везде
+
+В проекте есть два вида навигации:
+
+1. **Глобальная навигация** — `/splash`, `/auth`, `/dashboard`, `/booking`, `/blog/:slug`. Её ведёт GoRouter.
+2. **Локальная навигация внутри сценария** — например, после OTP открыть `PinSetupScreen` через `Navigator.of(context).push`.
+
+GoRouter особенно важен из-за `redirect`: приложение может централизованно решить, можно ли пользователю открыть экран. Без этого пришлось бы в каждом экране вручную проверять авторизацию.
+
+### 2.4. Почему есть repository-слой
+
+Repository — это “переводчик” между UI и backend. UI мыслит словами “получить врачей”, “создать запись”, “обновить профиль”. Backend мыслит URL-ами, JSON-полями и HTTP-методами. Repository прячет детали backend от экрана.
+
+Плохой вариант был бы таким: экран содержит `dio.get('/doctors')`, вручную парсит JSON, вручную показывает ошибки. В этом проекте лучше:
+
+```text
+DoctorsScreen
+→ doctorsListProvider
+→ DoctorsRepository.fetchList()
+→ Dio GET /doctors
+→ DoctorModel.fromApiList()
+```
+
+Так легче поддерживать проект: если backend поменяет endpoint, чаще всего достаточно исправить repository, а не весь UI.
+
 ## 3. Как приложение работает в целом
 
 ### 3.1. Запуск приложения
@@ -102,6 +168,81 @@ enum AuthStatus {
 2. Bootstrap читает локальные данные.
 3. Если включена биометрия — `/login/faceid`, иначе `/login/pin`.
 4. После успешного подтверждения — `/dashboard`.
+
+## 3.4. Подробный разбор жизненного цикла одного экрана
+
+Разберём на примере списка врачей. Это хороший пример, потому что в нём есть загрузка API, состояние loading/error/data, фильтры и переход в детальную карточку.
+
+1. Пользователь находится на `/dashboard`.
+2. `DashboardScreen` показывает `IndexedStack`, где вкладка врачей — это `DoctorsScreen`.
+3. В `DoctorsScreen` выполняется:
+
+```dart
+final async = ref.watch(doctorsListProvider);
+```
+
+4. `doctorsListProvider` запускает `DoctorsRepository.fetchList()`.
+5. Repository делает `GET /doctors`.
+6. Пока запрос идёт, `async.when(loading: ...)` показывает `CircularProgressIndicator`.
+7. Если запрос упал, `async.when(error: ...)` показывает экран ошибки и кнопку «Повторить».
+8. Если запрос успешен, JSON превращается в список `DoctorModel`.
+9. UI применяет локальные фильтры: поиск, специальность, категория, возраст.
+10. Отфильтрованные врачи отображаются карточками.
+11. При тапе на врача provider `doctorsSubNavProvider` получает selected slug.
+12. `AnimatedSwitcher` меняет список на detail-экран.
+
+Важно: загрузка данных и локальный поиск — разные уровни состояния. Данные с API живут в `doctorsListProvider`, а текст поиска `_query` живёт внутри `DoctorsScreen`, потому что он нужен только этому экрану.
+
+## 3.5. Как Flutter перерисовывает интерфейс
+
+Во Flutter вы не говорите “поставь этот текст в этот div”, как в DOM. Вы описываете дерево виджетов для текущего состояния. Когда состояние меняется, Flutter снова вызывает `build`, сравнивает новое дерево со старым и обновляет экран.
+
+Простой пример из логики PIN:
+
+```dart
+setState(() {
+  _current = next;
+  _status = _Status.idle;
+});
+```
+
+После `setState` Flutter снова вызывает `build`. Точки PIN, текст ошибки, цвет состояния и кнопки пересчитываются из новых значений `_current` и `_status`.
+
+В Riverpod похожий принцип, но состояние меняется не через `setState`, а через provider/notifier:
+
+```dart
+state = state.copyWith(step: 2, phone: phone);
+```
+
+Все виджеты, которые делают `ref.watch(loginFlowControllerProvider)`, увидят новый `step` и перерисуются.
+
+## 3.6. Как обрабатываются ошибки
+
+Ошибки в проекте идут по цепочке:
+
+```text
+Backend возвращает ошибку
+→ Dio получает DioException
+→ _ErrorInterceptor пытается достать message
+→ создаётся ApiException / UnauthorizedException
+→ Repository пробрасывает исключение выше
+→ Screen ловит DioException
+→ Screen показывает SnackBar или текст ошибки
+```
+
+Например, экран входа по телефону отдельно обрабатывает статус `422`, потому что backend может вернуть валидационную ошибку “Номер не найден”. Это не системная ошибка приложения, а нормальная бизнес-ситуация: пользователь ввёл номер, которого нет в базе.
+
+## 3.7. Как работает адаптивность
+
+Проект в основном ориентирован на мобильные экраны. Адаптивность достигается не через CSS media queries, а Flutter-инструментами:
+
+- `SafeArea` — не залезать под вырезы, статус-бар и системные панели;
+- `SingleChildScrollView` / `CustomScrollView` — контент можно прокрутить на маленьком экране;
+- `Expanded` / `Flexible` — элементы занимают доступное место;
+- `MediaQuery.of(context).padding.bottom` — учёт нижней системной области;
+- `LayoutBuilder` иногда используют, когда нужно знать доступную ширину/высоту.
+
+В dashboard нижняя навигация обёрнута в `SafeArea(top: false)`, чтобы кнопки не конфликтовали с системной навигацией устройства.
 
 ## 4. Mermaid-диаграммы
 
@@ -1520,6 +1661,129 @@ UI-контейнер wizard.
 | `windows/runner/win32_window.cpp` | Win32 window implementation |
 | `windows/runner/win32_window.h` | Win32 window header |
 
+## 20. Частые сценарии разработки
+
+### 20.1. Как добавить новый экран
+
+Типичный порядок:
+
+1. Создать файл экрана в подходящей папке `features/...`.
+2. Если экрану нужны данные API — создать или расширить repository.
+3. Создать provider, который отдаёт данные экрану.
+4. Добавить route в `lib/app/router.dart`.
+5. Если экран приватный, убедиться, что auth redirect его защищает.
+6. Добавить переход на экран из существующего UI.
+
+Мини-пример route:
+
+```dart
+GoRoute(
+  path: '/example',
+  pageBuilder: (context, state) => _buildPage(
+    state,
+    const ExampleScreen(),
+  ),
+),
+```
+
+### 20.2. Как добавить новый API-запрос
+
+Правильный путь:
+
+```text
+1. Добавить model/fromJson, если backend возвращает новый объект.
+2. Добавить метод в repository.
+3. Добавить provider.
+4. В экране читать provider через ref.watch.
+5. Обработать loading/error/data.
+```
+
+Пример структуры метода repository:
+
+```dart
+Future<List<SomethingModel>> fetchSomething() async {
+  final res = await _dio.get<Map<String, dynamic>>('/something');
+  final data = res.data?['data'];
+  if (data is! List) {
+    throw StateError('Invalid API response: expected data array');
+  }
+  return data
+      .map((e) => SomethingModel.fromJson(Map<String, dynamic>.from(e as Map)))
+      .toList();
+}
+```
+
+### 20.3. Как добавить новое поле профиля
+
+Нужно проверить всю цепочку:
+
+```text
+Backend JSON /me
+→ PatientAuthRepository.me() / updateMe()
+→ AuthController._applyPatientData()
+→ AuthState новое поле
+→ StorageService ключ + save/get
+→ ProfileScreen отображение
+→ EditProfileScreen форма
+```
+
+Если добавить поле только на экран, оно исчезнет после перезапуска. Если добавить только в storage, оно не придёт с backend. Поэтому профиль — хороший пример, где нужно обновлять несколько слоёв одновременно.
+
+### 20.4. Как добавить новую вкладку в dashboard
+
+Нужно изменить:
+
+1. `dashboard_tab_provider.dart` — если нужна новая логика индекса.
+2. `DashboardScreen` → список `children` в `IndexedStack`.
+3. `_BottomNav` → список `_NavItem`.
+4. Обработку Back, если у вкладки будет вложенная навигация.
+5. Переходы с главной или других экранов, если они должны открывать новую вкладку.
+
+Важно: индекс вкладки используется в разных местах. Например, главная переводит пользователя на записи так:
+
+```dart
+ref.read(dashboardTabIndexProvider.notifier).state = 3;
+```
+
+Если поменять порядок вкладок, нужно найти такие места и обновить индексы.
+
+### 20.5. Как безопасно менять авторизацию
+
+Авторизация затрагивает много файлов:
+
+- router redirect;
+- `AuthStatus`;
+- `AuthController.bootstrap`;
+- local storage;
+- secure storage;
+- login/register screens;
+- backend endpoints;
+- push token sync после входа.
+
+Перед изменениями нужно нарисовать сценарии:
+
+```text
+новый пользователь
+зарегистрированный пользователь без Face ID
+зарегистрированный пользователь с Face ID
+пользователь после logout
+пользователь с протухшим token
+```
+
+Иначе легко получить баг: например, пользователь authenticated, но router всё равно отправляет его на onboarding.
+
+### 20.6. Как читать большой UI-файл
+
+В проекте есть большие экраны вроде `home_screen.dart`, `doctors_screen.dart`, `appointments_screen.dart`. Их не нужно читать сверху вниз как роман. Лучше так:
+
+1. Найти главный public widget (`HomeScreen`, `DoctorsScreen`).
+2. Прочитать его `build`.
+3. Выписать дочерние private widgets (`_Header`, `_PromoSlider`, `_SectionHeader`).
+4. Читать каждый private widget отдельно.
+5. Helper-классы и функции читать после понимания общей структуры.
+
+Во Flutter большие UI-файлы часто устроены как “главный экран + много маленьких приватных виджетов ниже”. Это нормально, если эти виджеты используются только внутри одного экрана.
+
 ## 20. Как читать и расширять проект
 
 Если нужно понять новый экран, двигайтесь так:
@@ -1559,6 +1823,102 @@ UI-контейнер wizard.
 - **OTP** — одноразовый SMS-код.
 - **FCM** — Firebase Cloud Messaging.
 - **Secure Storage** — защищённое хранилище токенов.
+
+## 22. Подробные учебные разборы ключевых цепочек
+
+### 22.1. Цепочка “регистрация → token → dashboard”
+
+Самое важное в регистрации — понять, что пользователь становится “настоящим” для приложения не после ввода имени, а после успешной проверки OTP и получения access token от backend.
+
+```text
+Step1Personal собирает ФИО/дату/пол
+→ RegistrationController хранит эти данные временно
+→ Step2Phone отправляет телефон на backend
+→ backend отправляет SMS
+→ Step3Otp отправляет phone + otp
+→ backend возвращает token + patient
+→ AuthController сохраняет token в SecureStorage
+→ AuthController сохраняет профиль в SharedPreferences
+→ пользователь создаёт PIN
+→ пользователь включает/пропускает Face ID
+→ markAuthenticated()
+→ GoRouter пускает на /dashboard
+```
+
+Почему token хранится отдельно? Потому что token — чувствительная информация. Его нельзя хранить как обычную настройку UI. Поэтому `SecureStorage` используется для token, а `SharedPreferences` — для менее критичных данных профиля и настроек.
+
+### 22.2. Цепочка “открытие приложения зарегистрированным пользователем”
+
+При следующем запуске приложение не спрашивает SMS сразу. Оно делает bootstrap:
+
+```text
+SplashScreen
+→ AuthController.bootstrap()
+→ StorageService.isRegistered()
+→ StorageService читает имя/телефон/PIN/FaceID
+→ SecureStorage может иметь token
+→ AuthState становится registeredLoggedOut
+→ Router отправляет на /login/faceid или /login/pin
+```
+
+Важно: `registeredLoggedOut` не означает, что пользователь неизвестен. Это значит: “мы знаем этого пользователя локально, но он ещё не подтвердил доступ к приложению в текущей сессии”.
+
+### 22.3. Цепочка “создание записи на приём”
+
+Booking wizard построен так, чтобы каждый следующий шаг зависел от предыдущего:
+
+```text
+Услуга определяет список врачей
+Врач + услуга определяют доступные даты
+Дата + врач + услуга определяют слоты
+Слот + врач + услуга отправляются в /appointments
+```
+
+Поэтому при выборе новой услуги нужно сбрасывать врача, дату и слот. Иначе можно получить невозможную комбинацию: старая дата от другого врача + новая услуга. Именно поэтому state содержит `clearDoctor`, `clearDate`, `clearSlot`.
+
+### 22.4. Цепочка “перенос записи”
+
+Перенос использует тот же wizard, но с `appointmentId`. Если `appointmentId` есть, submit делает не создание новой записи, а reschedule:
+
+```dart
+if (arg.isReschedule) {
+  await ref
+      .read(appointmentsRepositoryProvider)
+      .rescheduleAppointment(arg.appointmentId!, slot);
+} else {
+  await ref.read(bookingRepositoryProvider).createAppointment(...);
+}
+```
+
+Это хороший пример переиспользования: UI выбора даты/слота тот же, а финальное действие другое.
+
+### 22.5. Цепочка “push token до и после логина”
+
+При старте приложение может получить FCM token ещё до авторизации. Оно пытается отправить token на backend анонимно. После входа `App` слушает `AuthState` и вызывает `resendAfterLogin()`.
+
+Зачем повторно? Потому что после логина у Dio уже есть Authorization header, и backend может привязать устройство к конкретному пациенту.
+
+### 22.6. Цепочка “ошибка API на экране”
+
+Пример: backend вернул 401.
+
+```text
+Dio получает HTTP 401
+→ _ErrorInterceptor создаёт UnauthorizedException
+→ DioException.error содержит UnauthorizedException
+→ верхний слой может показать “Необходима авторизация”
+```
+
+Пример: backend вернул validation error.
+
+```text
+Backend JSON содержит message/errors
+→ _extractMessage достаёт человекочитаемый текст
+→ ApiException(message, statusCode)
+→ экран показывает SnackBar или inline error
+```
+
+Это лучше, чем показывать пользователю сырой `DioException`, потому что такие ошибки обычно непонятны новичку и пользователю.
 
 ## 22. Итоговая картина
 
