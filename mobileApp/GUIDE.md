@@ -244,6 +244,673 @@ Backend возвращает ошибку
 
 В dashboard нижняя навигация обёрнута в `SafeArea(top: false)`, чтобы кнопки не конфликтовали с системной навигацией устройства.
 
+## 4. Очень подробные разборы кода: читаем проект “по косточкам”
+
+В этом разделе специально много кода. Цель — не просто показать фрагменты, а объяснить, **что именно делает каждая часть и как она связана с остальным приложением**.
+
+### 4.1. Точка входа: `main.dart`
+
+Упрощённо `main.dart` выглядит так:
+
+```dart
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (kFirebaseEnabled) {
+    try {
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(
+        firebaseMessagingBackgroundHandler,
+      );
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[main] Firebase init failed: $e\n$st');
+      }
+    }
+  }
+
+  runApp(const ProviderScope(child: App()));
+}
+```
+
+Разбираем по шагам:
+
+1. `Future<void> main() async` — приложение стартует с функции `main`. Она асинхронная, потому что Firebase и другие сервисы могут требовать `await`.
+2. `WidgetsFlutterBinding.ensureInitialized()` — говорит Flutter: “подготовь системные связи, потому что сейчас мы будем делать async-операции до `runApp`”. Без этого некоторые плагины могут работать нестабильно.
+3. `if (kFirebaseEnabled)` — Firebase можно включать/выключать через dart-define. Это полезно, если локально Firebase не настроен.
+4. `Firebase.initializeApp()` — подключает Firebase SDK.
+5. `FirebaseMessaging.onBackgroundMessage(...)` — регистрирует функцию, которая будет вызываться, если push пришёл в фоне.
+6. `runApp(...)` — реальный старт UI.
+7. `ProviderScope` — корневой контейнер Riverpod. Без него `ref.watch(...)` и providers в приложении не работали бы.
+8. `App()` — корневой виджет из `lib/app/app.dart`.
+
+Мысленная модель:
+
+```text
+ОС открыла приложение
+→ main()
+→ подготовка Flutter
+→ подготовка Firebase
+→ включение Riverpod
+→ App
+→ MaterialApp.router
+→ router решает первый экран
+```
+
+### 4.2. Корневой виджет: `App`
+
+Фрагмент:
+
+```dart
+class App extends ConsumerWidget {
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(notificationControllerProvider);
+    ref.watch(pushTokenSyncProvider);
+
+    ref.listen<AuthState>(authControllerProvider, (previous, current) {
+      if (current.status == AuthStatus.authenticated &&
+          previous?.status != AuthStatus.authenticated) {
+        ref.read(pushTokenSyncProvider).resendAfterLogin();
+      }
+    });
+
+    final router = ref.watch(appRouterProvider);
+
+    return MaterialApp.router(
+      title: 'Маяк Здоровья',
+      routerConfig: router,
+      locale: const Locale('ru', 'RU'),
+      theme: ThemeData(...),
+    );
+  }
+}
+```
+
+Что тут важно:
+
+- `ConsumerWidget` — это Flutter widget, который умеет читать Riverpod через `ref`.
+- `ref.watch(notificationControllerProvider)` не просто “читает значение”. Он запускает provider, а provider внутри настраивает уведомления.
+- `ref.watch(pushTokenSyncProvider)` запускает синхронизацию FCM-токена.
+- `ref.listen<AuthState>(...)` — подписка на изменение авторизации. Это не рисует UI, а выполняет побочный эффект.
+- `previous?.status != AuthStatus.authenticated` защищает от повторного вызова при каждом rebuild.
+- `MaterialApp.router` говорит Flutter: “навигацией управляет router, а не ручной список routes”.
+
+Почему это сделано в `App`, а не на каждом экране? Потому что уведомления, router и auth listener — глобальные механизмы. Они должны жить один раз на всё приложение.
+
+### 4.3. Router: как приложение решает, куда пустить пользователя
+
+Ключевой фрагмент из `router.dart`:
+
+```dart
+redirect: (context, state) {
+  final auth = ref.read(authControllerProvider);
+  final status = auth.status;
+  final loc = state.matchedLocation;
+
+  if (status == AuthStatus.unknown) {
+    return loc == '/splash' ? null : '/splash';
+  }
+
+  const publicRoutes = [
+    '/splash', '/onboarding', '/auth', '/register',
+    '/login', '/login/pin', '/login/faceid'
+  ];
+  final isPublic = publicRoutes.any((r) => loc.startsWith(r));
+
+  if (status == AuthStatus.unregistered) {
+    return isPublic ? null : '/auth';
+  }
+
+  if (status == AuthStatus.registeredLoggedOut) {
+    if (loc == '/login' ||
+        loc == '/login/pin' ||
+        loc == '/login/faceid' ||
+        loc.startsWith('/register')) {
+      return null;
+    }
+    return auth.faceIdEnabled ? '/login/faceid' : '/login/pin';
+  }
+
+  if (status == AuthStatus.authenticated && isPublic) {
+    return '/dashboard';
+  }
+
+  return null;
+}
+```
+
+Разбор логики:
+
+- `loc` — текущий путь, например `/dashboard`.
+- `return null` означает: “ничего не менять, путь разрешён”.
+- `return '/auth'` означает: “перенаправить пользователя”.
+- Когда status `unknown`, приложение ещё не знает, зарегистрирован пользователь или нет, поэтому держит его на splash.
+- Когда `unregistered`, приватные экраны запрещены.
+- Когда `registeredLoggedOut`, пользователь известен, но должен подтвердить вход через PIN/Face ID.
+- Когда `authenticated`, публичные auth-экраны уже не нужны, поэтому пользователь отправляется в dashboard.
+
+Новичку важно понять: **не экраны сами себя защищают**, а router централизованно контролирует доступ.
+
+### 4.4. Dio client: почему каждый запрос автоматически получает token
+
+Фрагмент:
+
+```dart
+final dioProvider = Provider<Dio>((ref) {
+  final secure = ref.watch(secureStorageProvider);
+
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: resolvedApiBaseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 20),
+      sendTimeout: const Duration(seconds: 20),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    ),
+  );
+
+  dio.interceptors.add(_AuthInterceptor(secure));
+  dio.interceptors.add(_ErrorInterceptor());
+
+  return dio;
+});
+```
+
+Здесь создаётся один настроенный HTTP-клиент. Все repositories берут именно его, поэтому все запросы имеют одинаковые timeout, baseUrl и headers.
+
+Auth interceptor:
+
+```dart
+class _AuthInterceptor extends Interceptor {
+  final SecureStorage _storage;
+
+  _AuthInterceptor(this._storage);
+
+  @override
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final token = await _storage.readAccessToken();
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+    handler.next(options);
+  }
+}
+```
+
+Пошагово:
+
+1. Любой repository вызывает `_dio.get(...)` или `_dio.post(...)`.
+2. Перед отправкой Dio вызывает `onRequest`.
+3. Interceptor читает access token из secure storage.
+4. Если token есть, добавляет HTTP-заголовок `Authorization`.
+5. `handler.next(options)` говорит Dio: “продолжай запрос”.
+
+Итог: `BookingRepository`, `DoctorsRepository`, `BlogRepository` не думают об авторизации. Они просто делают запросы, а token добавляется автоматически.
+
+### 4.5. Error interceptor: как техническая ошибка превращается в понятное сообщение
+
+Фрагмент:
+
+```dart
+void onError(DioException err, ErrorInterceptorHandler handler) {
+  final status = err.response?.statusCode;
+
+  if (status == 401) {
+    handler.reject(DioException(
+      requestOptions: err.requestOptions,
+      response: err.response,
+      error: const UnauthorizedException(),
+      type: err.type,
+    ));
+    return;
+  }
+
+  final message = _extractMessage(err);
+
+  handler.reject(DioException(
+    requestOptions: err.requestOptions,
+    response: err.response,
+    error: ApiException(message, statusCode: status, raw: err),
+    type: err.type,
+  ));
+}
+```
+
+Почему это полезно:
+
+- backend может вернуть JSON `{ "message": "Телефон уже занят" }`;
+- Dio сам по себе дал бы технический `DioException`;
+- interceptor достаёт `message` и кладёт его в `ApiException`;
+- экран может показать пользователю понятный текст.
+
+Метод `_extractMessage` ищет сообщение в двух популярных местах:
+
+```dart
+if (data['message'] is String) {
+  return data['message'] as String;
+}
+final errors = data['errors'];
+if (errors is Map && errors.isNotEmpty) {
+  final first = errors.values.first;
+  if (first is List && first.isNotEmpty && first.first is String) {
+    return first.first as String;
+  }
+}
+```
+
+Это типично для Laravel API: обычное сообщение лежит в `message`, а ошибки валидации — в `errors`.
+
+### 4.6. AuthController: bootstrap — почему приложение помнит пользователя
+
+Фрагмент:
+
+```dart
+Future<void> bootstrap() async {
+  final isRegistered = await _storage.isRegistered();
+  if (!isRegistered) {
+    state = state.copyWith(status: AuthStatus.unregistered);
+    return;
+  }
+
+  final firstName = await _storage.getFirstName();
+  final lastName = await _storage.getLastName();
+  final phone = await _storage.getPhone();
+  final faceId = await _storage.isFaceIdEnabled();
+
+  final nextStatus = state.status == AuthStatus.authenticated
+      ? AuthStatus.authenticated
+      : AuthStatus.registeredLoggedOut;
+
+  state = AuthState(
+    status: nextStatus,
+    firstName: firstName,
+    lastName: lastName,
+    phone: phone,
+    faceIdEnabled: faceId,
+  );
+
+  final token = await _secureStorage.readAccessToken();
+  if (token != null && token.isNotEmpty) {
+    try {
+      final p = await _authRepository.me();
+      await _applyPatientData(p, keepPhone: phone);
+    } on DioException {
+      // Сеть / протухший токен — остаёмся на локальных данных
+    }
+  }
+}
+```
+
+Что здесь происходит:
+
+1. Сначала читается `isRegistered`. Это быстрый локальный ответ: есть ли сохранённый профиль.
+2. Если регистрации нет — статус `unregistered`, router отправит на auth/onboarding.
+3. Если регистрация есть — читаются имя, фамилия, телефон и Face ID.
+4. Статус становится `registeredLoggedOut`, потому что приложение помнит пользователя, но ещё не разблокировано.
+5. Потом читается token из secure storage.
+6. Если token есть, приложение пробует обновить профиль через `/me`.
+7. Если сеть недоступна или token протух, приложение не падает, а остаётся на локальных данных.
+
+Очень важная идея: bootstrap даёт “мягкий старт”. Пользователь может хотя бы попасть на PIN/Face ID, даже если backend временно недоступен.
+
+### 4.7. AuthController: завершение регистрации
+
+Фрагмент:
+
+```dart
+Future<void> completeRegistrationWithApiToken({
+  required String accessToken,
+  required String firstName,
+  required String lastName,
+  required String phone,
+  String middleName = '',
+  String birthDate = '',
+  String gender = '',
+}) async {
+  await _secureStorage.saveTokens(accessToken: accessToken);
+  await _storage.saveRegistration(
+    firstName: firstName,
+    lastName: lastName,
+    middleName: middleName,
+    phone: phone,
+    birthDate: birthDate,
+    gender: gender,
+  );
+  state = state.copyWith(
+    status: AuthStatus.registeredLoggedOut,
+    firstName: firstName,
+    lastName: lastName,
+    middleName: middleName,
+    phone: phone,
+    birthDate: birthDate,
+    gender: gender,
+  );
+}
+```
+
+Почему status не сразу `authenticated`? Потому что после SMS-кода пользователь ещё должен создать PIN и пройти/пропустить Face ID. Поэтому приложение говорит: “регистрация подтверждена, но локальная защита ещё не завершена”.
+
+Разделение хранилищ:
+
+```text
+accessToken → SecureStorage
+ФИО/телефон/дата/пол → SharedPreferences через StorageService
+текущее состояние UI → AuthState в памяти
+```
+
+### 4.8. Riverpod provider на простом примере dashboard tab
+
+Файл `dashboard_tab_provider.dart` очень маленький, но важный:
+
+```dart
+final dashboardTabIndexProvider = StateProvider<int>((ref) => 0);
+```
+
+Это означает:
+
+- есть глобальное число `int`;
+- начальное значение `0`;
+- `0` — главная вкладка;
+- другие экраны могут это число читать и менять.
+
+Чтение:
+
+```dart
+final currentIndex = ref.watch(dashboardTabIndexProvider);
+```
+
+Изменение:
+
+```dart
+ref.read(dashboardTabIndexProvider.notifier).state = 3;
+```
+
+Почему не обычная переменная? Потому что обычная переменная не уведомит Flutter, что UI нужно перерисовать. `StateProvider` уведомляет всех подписчиков.
+
+### 4.9. FutureProvider.family на примере блога
+
+Фрагмент:
+
+```dart
+final articleDetailProvider =
+    FutureProvider.family<ArticleModel, String>((ref, slug) async {
+  return ref.watch(blogRepositoryProvider).fetchDetail(slug);
+});
+```
+
+Разбор:
+
+- `FutureProvider` — provider для асинхронной операции.
+- `.family` означает: provider зависит от параметра.
+- `ArticleModel` — что вернётся после загрузки.
+- `String` — тип параметра, здесь `slug`.
+- `fetchDetail(slug)` — API-запрос за статьёй.
+
+Использование на экране статьи примерно такое:
+
+```dart
+final articleAsync = ref.watch(articleDetailProvider(slug));
+
+return articleAsync.when(
+  loading: () => const CircularProgressIndicator(),
+  error: (error, stack) => Text('Ошибка: $error'),
+  data: (article) => Text(article.title),
+);
+```
+
+`AsyncValue.when` заставляет разработчика явно обработать три состояния: загрузка, ошибка, данные. Это снижает шанс забыть loading или error UI.
+
+### 4.10. BookingWizardNotifier: как строятся шаги записи
+
+Фрагмент:
+
+```dart
+static List<BookingStep> _computeSteps({
+  required bool hasDoctor,
+  required bool hasService,
+}) {
+  final steps = <BookingStep>[];
+  if (!hasService) steps.add(BookingStep.service);
+  if (!hasDoctor) steps.add(BookingStep.doctor);
+  steps.add(BookingStep.date);
+  steps.add(BookingStep.slot);
+  steps.add(BookingStep.confirm);
+  return steps;
+}
+```
+
+Эта функция делает wizard гибким:
+
+- если пользователь пришёл просто на `/booking`, нужно выбрать услугу и врача;
+- если пришёл с карточки услуги `/booking?service=...`, услуга уже известна, шаг услуги можно пропустить;
+- если пришёл с врача и услуги, можно сразу выбирать дату;
+- если это перенос записи, часть данных тоже может быть заранее известна.
+
+Примеры:
+
+```text
+/booking
+→ service → doctor → date → slot → confirm
+
+/booking?service=uzi
+→ doctor → date → slot → confirm
+
+/booking?doctor=ivanov&service=uzi
+→ date → slot → confirm
+```
+
+### 4.11. BookingWizardNotifier: почему при выборе сбрасываются следующие шаги
+
+Фрагмент:
+
+```dart
+void selectService(BookingServiceItem item) {
+  state = state.copyWith(
+    service: item,
+    clearDoctor: true,
+    clearDate: true,
+    clearSlot: true,
+    clearError: true,
+    stepIndex: state.stepIndex + 1,
+  );
+}
+```
+
+Представьте пользователь выбрал:
+
+```text
+Услуга: УЗИ
+Врач: Иванов
+Дата: 20 мая
+Слот: 12:00
+```
+
+Потом он вернулся назад и поменял услугу на “Кардиология”. Старый врач Иванов может не оказывать эту услугу, старая дата может быть недоступна, старый слот может быть занят. Поэтому код очищает всё, что зависит от услуги:
+
+```text
+service меняется
+→ doctor очищается
+→ date очищается
+→ slot очищается
+```
+
+То же самое происходит при выборе врача: дата и слот очищаются, потому что расписание у другого врача другое.
+
+### 4.12. Booking submit: создание и перенос записи в одном месте
+
+Фрагмент:
+
+```dart
+Future<bool> submit(String? note) async {
+  var service = state.service;
+  var doctor = state.doctor;
+  final slot = state.slot;
+
+  if (service == null || doctor == null || slot == null) {
+    state = state.copyWith(error: 'Заполните все шаги перед отправкой');
+    return false;
+  }
+
+  state = state.copyWith(isSubmitting: true, clearError: true);
+
+  try {
+    if (arg.isReschedule) {
+      await ref
+          .read(appointmentsRepositoryProvider)
+          .rescheduleAppointment(arg.appointmentId!, slot);
+    } else {
+      await ref.read(bookingRepositoryProvider).createAppointment(
+            serviceId: service.id,
+            doctorId: doctor.id,
+            startAt: slot,
+            note: note,
+          );
+    }
+
+    ref.invalidate(upcomingAppointmentsProvider);
+    ref.invalidate(pastAppointmentsProvider);
+
+    state = state.copyWith(isSubmitting: false, done: true);
+    return true;
+  } catch (e) {
+    final msg = _parseError(e);
+    state = state.copyWith(isSubmitting: false, error: msg);
+    return false;
+  }
+}
+```
+
+Пошагово:
+
+1. Берём выбранные `service`, `doctor`, `slot` из state.
+2. Если чего-то нет — показываем ошибку и не отправляем запрос.
+3. Ставим `isSubmitting=true`, чтобы UI мог показать loader и заблокировать кнопку.
+4. Если это перенос (`arg.isReschedule`) — вызываем repository записей.
+5. Иначе создаём новую запись.
+6. После успеха инвалидируем списки upcoming/past appointments.
+7. `invalidate` говорит Riverpod: “эти данные устарели, при следующем чтении загрузить заново”.
+8. `done=true` сообщает экрану, что сценарий завершён.
+9. При ошибке `_parseError` превращает исключение в текст.
+
+### 4.13. Как `copyWith` помогает не ломать состояние
+
+Во многих state-классах есть `copyWith`. Идея простая: вместо изменения объекта “на месте” создаётся новый объект с частью новых полей.
+
+Пример из booking:
+
+```dart
+state = state.copyWith(
+  date: date,
+  clearSlot: true,
+  clearError: true,
+  stepIndex: state.stepIndex + 1,
+);
+```
+
+Это значит:
+
+```text
+оставь service как был
+оставь doctor как был
+поставь новую date
+очисти slot
+очисти error
+увеличь stepIndex
+создай новый BookingWizardState
+```
+
+Почему это важно: Riverpod лучше работает с immutable-state подходом. Когда создаётся новый объект state, подписчики точно понимают, что состояние изменилось.
+
+### 4.14. Как экран превращает AsyncValue в UI
+
+Почти любой экран с API живёт по схеме:
+
+```dart
+final data = ref.watch(someFutureProvider);
+
+return data.when(
+  loading: () => const Center(child: CircularProgressIndicator()),
+  error: (e, st) => ErrorView(message: e.toString()),
+  data: (items) => ListView.builder(
+    itemCount: items.length,
+    itemBuilder: (context, index) => ItemCard(item: items[index]),
+  ),
+);
+```
+
+Новичку важно запомнить: сетевой запрос — это не “один результат”. У него всегда минимум три состояния:
+
+```text
+ещё грузится
+упал с ошибкой
+успешно вернул данные
+```
+
+Riverpod `AsyncValue` заставляет явно обработать все три. Поэтому UI не зависает в пустоте.
+
+### 4.15. Как связаны файлы на примере “пользователь нажал Записаться”
+
+```text
+Doctor detail / Service detail
+→ context.push('/booking?...') или context.go('/booking?...')
+→ app/router.dart создаёт BookingScreen с query parameters
+→ BookingScreen создаёт bookingWizardProvider(params)
+→ BookingWizardNotifier.build() вычисляет нужные шаги
+→ step widget показывает данные через bookingServicesProvider/bookingDoctorsProvider
+→ пользователь выбирает дату/слот
+→ BookingConfirmStep вызывает notifier.submit(note)
+→ BookingRepository.createAppointment или AppointmentsRepository.rescheduleAppointment
+→ Dio отправляет запрос с Authorization
+→ backend создаёт/переносит запись
+→ providers записей invalidated
+→ dashboard tab index = 3
+→ пользователь видит обновлённые записи
+```
+
+Это пример полной цепочки “UI → router → state → repository → API → refresh UI”. Именно так устроена большая часть приложения.
+
+### 4.16. Как связаны файлы на примере “пользователь открыл статью блога”
+
+```text
+HomeScreen или BlogScreen
+→ пользователь нажал карточку статьи
+→ context.push('/blog/$slug')
+→ GoRouter route /blog/:slug
+→ ArticleScreen(slug: state.pathParameters['slug'])
+→ articleDetailProvider(slug)
+→ BlogRepository.fetchDetail(slug)
+→ Dio GET /articles/{slug}
+→ ArticleModel.fromJson
+→ ArticleScreen показывает title, cover, content
+→ flutter_html рендерит HTML body
+```
+
+Здесь `slug` — ключ связи между UI и backend. Карточка статьи знает slug, route передаёт slug, repository запрашивает slug, backend возвращает статью.
+
+### 4.17. Как связаны файлы на примере “пользователь вышел из аккаунта”
+
+```text
+ProfileScreen кнопка logout
+→ AuthController.logout()
+→ PatientAuthRepository.logout() отправляет запрос на backend
+→ SecureStorage очищает token
+→ StorageService очищает локальный профиль/PIN/FaceID
+→ AuthState становится unregistered или registeredLoggedOut в зависимости от логики
+→ context.go('/auth')
+→ GoRouter больше не пустит в /dashboard
+```
+
+Главная мысль: logout — это не просто “перейти на экран входа”. Нужно также убрать token и локальные данные, иначе приложение может снова считать пользователя вошедшим.
+
 ## 4. Mermaid-диаграммы
 
 ### 4.1. Диаграмма архитектуры
