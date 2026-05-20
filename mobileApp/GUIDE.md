@@ -92,7 +92,442 @@ DoctorsScreen
 
 Так легче поддерживать проект: если backend поменяет endpoint, чаще всего достаточно исправить repository, а не весь UI.
 
-## 3. Как приложение работает в целом
+## 3. Большой разбор технологий и терминологии проекта
+
+Этот раздел нужен, если вы почти не знаете Flutter и Dart. Здесь объясняется не «в общем по интернету», а именно **как технологии применены в этом проекте**.
+
+### 3.1. Dart: язык, на котором написано приложение
+
+Dart — язык программирования для Flutter. Он похож на смесь JavaScript/TypeScript, Java и C#. В проекте постоянно встречаются такие конструкции:
+
+```dart
+class AuthState {
+  final AuthStatus status;
+  final String firstName;
+
+  const AuthState({
+    required this.status,
+    this.firstName = '',
+  });
+}
+```
+
+Что тут происходит:
+
+- `class AuthState` — объявляется класс. Класс описывает форму объекта.
+- `final` — поле можно задать один раз, потом нельзя поменять напрямую.
+- `String` — строка.
+- `AuthStatus` — пользовательский тип `enum`.
+- `const AuthState` — конструктор, который можно создавать как compile-time constant, если все значения известны.
+- `{ ... }` в параметрах конструктора — named parameters. Вы вызываете так: `AuthState(status: AuthStatus.unknown)`.
+- `required` — параметр обязателен.
+- `this.firstName = ''` — если имя не передали, будет пустая строка.
+
+В проекте часто используется immutable-подход: объект state не меняется напрямую, вместо этого создаётся копия через `copyWith`.
+
+```dart
+state = state.copyWith(status: AuthStatus.authenticated);
+```
+
+Это значит: «создай новый `AuthState`, оставь все поля как были, но `status` замени на `authenticated`».
+
+### 3.2. Null safety: почему в коде много `?`, `!` и `??`
+
+Dart по умолчанию не разрешает `null`, если тип не помечен `?`.
+
+```dart
+String name = 'Анна';     // не может быть null
+String? phone = null;     // может быть null
+```
+
+В проекте это видно в query-параметрах booking:
+
+```dart
+final doctor = state.uri.queryParameters['doctor'];
+final appointmentId = aptIdRaw != null ? int.tryParse(aptIdRaw) : null;
+```
+
+Почему `doctor` может быть null? Потому что URL может быть `/booking`, а может быть `/booking?doctor=ivanov`. Если параметра нет, будет null.
+
+Основные операторы:
+
+| Оператор | Значение | Пример |
+|---|---|---|
+| `?` | значение может быть null | `String? doctorSlug` |
+| `!` | «я уверен, что здесь не null» | `arg.appointmentId!` |
+| `??` | значение по умолчанию | `name ?? ''` |
+| `?.` | вызвать только если не null | `previous?.status` |
+
+С `!` нужно быть осторожным: если значение всё-таки null, приложение упадёт. В проекте `arg.appointmentId!` безопасен только внутри `if (arg.isReschedule)`, потому что `isReschedule` проверяет, что appointmentId не null.
+
+### 3.3. Future, async и await: как приложение ждёт API
+
+Сетевые запросы не выполняются мгновенно. Поэтому методы repository возвращают `Future`:
+
+```dart
+Future<Map<String, dynamic>> me() async {
+  final res = await _dio.get<Map<String, dynamic>>('/me');
+  return Map<String, dynamic>.from(res.data?['data'] as Map);
+}
+```
+
+Разбор:
+
+- `Future<...>` — результат будет позже.
+- `async` — внутри функции можно использовать `await`.
+- `await _dio.get(...)` — остановить выполнение этой функции, пока HTTP-запрос не завершится.
+- UI при этом не зависает, потому что Flutter event loop продолжает работать.
+
+В Riverpod такие `Future` обычно оборачиваются в `FutureProvider`, и экран получает `AsyncValue`.
+
+### 3.4. Widget: базовый строительный блок Flutter
+
+Во Flutter всё на экране — widget: текст, кнопка, padding, колонка, экран целиком.
+
+```dart
+return Column(
+  children: [
+    Text('Здравствуйте'),
+    PrimaryButton(
+      text: 'Продолжить',
+      onPressed: _submit,
+    ),
+  ],
+);
+```
+
+Важно: `Column` — тоже widget, но он не рисует «красивую штуку», а раскладывает детей вертикально. `Padding` — тоже widget, он добавляет отступы. `SafeArea` — тоже widget, он учитывает вырезы и системные панели.
+
+В проекте экраны — это большие widgets, например `DashboardScreen`, `RegistrationScreen`, `BookingScreen`.
+
+### 3.5. StatelessWidget, StatefulWidget, ConsumerWidget
+
+В проекте встречаются разные типы виджетов:
+
+| Тип | Когда используется | Пример |
+|---|---|---|
+| `StatelessWidget` | нет локального состояния | простые карточки/кнопки |
+| `StatefulWidget` | есть локальное состояние через `setState` | ввод PIN, анимации, контроллеры текста |
+| `ConsumerWidget` | нужен Riverpod `ref` | экраны, читающие providers |
+| `ConsumerStatefulWidget` | нужен и локальный state, и Riverpod | dashboard, сложные формы |
+
+Пример `ConsumerWidget`:
+
+```dart
+class App extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
+    return MaterialApp.router(routerConfig: router);
+  }
+}
+```
+
+`WidgetRef ref` — это доступ к Riverpod. Через него читают providers.
+
+### 3.6. BuildContext: «где я нахожусь в дереве UI»
+
+`BuildContext context` передаётся почти в каждый `build`. Он нужен для доступа к окружению виджета:
+
+```dart
+Theme.of(context)
+ScaffoldMessenger.of(context).showSnackBar(...)
+Navigator.of(context).push(...)
+context.go('/dashboard')
+```
+
+Мысленно `context` — это адрес текущего виджета в дереве. Через него Flutter понимает, где искать тему, навигатор, scaffold, локализацию.
+
+### 3.7. State: локальное и глобальное состояние
+
+В проекте есть два уровня состояния.
+
+Локальное состояние — нужно только одному экрану:
+
+```dart
+String _query = '';
+
+setState(() {
+  _query = value;
+});
+```
+
+Глобальное/разделяемое состояние — нужно нескольким экранам:
+
+```dart
+final dashboardTabIndexProvider = StateProvider<int>((ref) => 0);
+```
+
+Как выбирать:
+
+| Вопрос | Где хранить |
+|---|---|
+| Значение нужно только одному widget? | `setState` / локальные поля |
+| Значение нужно разным экранам? | Riverpod provider |
+| Значение нужно после перезапуска приложения? | SharedPreferences / SecureStorage |
+| Значение приходит с backend? | Repository + FutureProvider |
+
+### 3.8. Riverpod: как работает управление состоянием
+
+Riverpod — это система providers. Provider можно представить как «именованный источник данных».
+
+Простой provider зависимости:
+
+```dart
+final patientAuthRepositoryProvider = Provider<PatientAuthRepository>((ref) {
+  return PatientAuthRepository(ref.watch(dioProvider));
+});
+```
+
+Что это значит:
+
+1. Когда кому-то понадобится `PatientAuthRepository`, Riverpod создаст его.
+2. Для создания нужен `dioProvider`.
+3. Если dependency изменится, Riverpod может пересоздать зависимые объекты.
+
+StateNotifier provider:
+
+```dart
+final authControllerProvider =
+    StateNotifierProvider<AuthController, AuthState>((ref) {
+  return AuthController(
+    ref.watch(storageServiceProvider),
+    ref.watch(secureStorageProvider),
+    ref.watch(patientAuthRepositoryProvider),
+  );
+});
+```
+
+Такой provider отдаёт сразу две вещи:
+
+- `AuthState` — текущее состояние для UI;
+- `AuthController` — методы, которые меняют состояние.
+
+Чтение state:
+
+```dart
+final auth = ref.watch(authControllerProvider);
+```
+
+Вызов метода controller:
+
+```dart
+await ref.read(authControllerProvider.notifier).logout();
+```
+
+Почему `watch` и `read` разные:
+
+- `watch` подписывает UI на изменения;
+- `read` просто берёт значение один раз, часто для кнопки или метода.
+
+### 3.9. GoRouter: маршрутизация и URL-логика
+
+GoRouter связывает строковые пути с экранами:
+
+```dart
+GoRoute(
+  path: '/blog/:slug',
+  pageBuilder: (context, state) => _buildPage(
+    state,
+    ArticleScreen(slug: state.pathParameters['slug'] ?? ''),
+  ),
+),
+```
+
+Разбор:
+
+- `/blog/:slug` — route с параметром.
+- Если URL `/blog/pitanie`, то `slug = 'pitanie'`.
+- `state.pathParameters['slug']` достаёт этот slug.
+- `ArticleScreen` получает slug и загружает статью.
+
+Query-параметры работают иначе:
+
+```dart
+final doctor = state.uri.queryParameters['doctor'];
+```
+
+Для `/booking?doctor=ivanov&service=uzi` это даст `doctor = 'ivanov'`.
+
+### 3.10. Dio: HTTP-клиент
+
+Dio — библиотека для запросов к backend. В проекте она работает с Laravel API.
+
+Пример GET:
+
+```dart
+final res = await _dio.get<Map<String, dynamic>>('/doctors');
+```
+
+Пример POST:
+
+```dart
+await _dio.post('/appointments', data: {
+  'service_id': serviceId,
+  'doctor_id': doctorId,
+  'start_at': startAt.toUtc().toIso8601String(),
+  'note': note,
+});
+```
+
+Важно: repository передаёт только относительный путь `/appointments`, потому что base URL уже задан в `dio_client.dart`.
+
+### 3.11. JSON и модели
+
+Backend возвращает JSON. Dart-коду неудобно работать с «сырыми map», поэтому JSON превращают в модели.
+
+Примерная идея:
+
+```dart
+factory ArticleModel.fromJson(Map<String, dynamic> json) {
+  return ArticleModel(
+    id: json['id'] as int,
+    slug: json['slug'] as String,
+    title: json['title'] as String,
+  );
+}
+```
+
+Зачем модели:
+
+- меньше опечаток в ключах;
+- понятнее типы;
+- UI видит `article.title`, а не `json['title']`;
+- можно добавить helper-getters вроде `formattedDate`.
+
+### 3.12. SharedPreferences и SecureStorage
+
+В проекте два вида локального хранения.
+
+`SharedPreferences`:
+
+- простые настройки;
+- имя/телефон;
+- флаг регистрации;
+- Face ID enabled;
+- PIN в текущей реализации.
+
+`SecureStorage`:
+
+- access token;
+- refresh token.
+
+Правило поддержки: если данные дают доступ к аккаунту — хранить в secure storage. Если это просто UI-настройка — можно в SharedPreferences.
+
+### 3.13. Firebase Cloud Messaging и local notifications
+
+FCM нужен, чтобы backend мог отправить push на устройство. Но когда приложение открыто, push может не показаться как системное уведомление. Поэтому есть local notifications.
+
+Цепочка:
+
+```text
+Firebase получает push
+→ FirebaseMessagingService ловит сообщение
+→ NotificationPayload парсит data
+→ LocalNotificationsService показывает уведомление
+→ пользователь нажимает уведомление
+→ NotificationRouter открывает нужный экран
+```
+
+`pushTokenSyncProvider` отдельно отправляет FCM token на backend, чтобы backend знал, какому устройству отправлять уведомления.
+
+### 3.14. local_auth: Face ID / Touch ID / отпечаток
+
+`local_auth` не проверяет пользователя на backend. Он спрашивает операционную систему: «разрешён ли доступ владельцу устройства?»
+
+В проекте это используется как локальная защита после регистрации:
+
+```text
+пользователь уже зарегистрирован
+→ приложение просит Face ID / PIN
+→ при успехе AuthController.markAuthenticated()
+→ router пускает в dashboard
+```
+
+То есть биометрия не заменяет backend token. Она только разблокирует локальный вход в приложение.
+
+### 3.15. flutter_html и html
+
+Backend может отдавать тело статьи или акции как HTML. Flutter сам HTML не рендерит как браузер, поэтому используется `flutter_html`.
+
+Примерная логика:
+
+```dart
+Html(data: article.content)
+```
+
+Это превращает HTML-теги в Flutter widgets. Файл `html_prose.dart` задаёт общие стили, чтобы HTML выглядел как нормальный текст внутри приложения.
+
+### 3.16. intl
+
+`intl` используется для форматирования дат и времени:
+
+```dart
+DateFormat('HH:mm').format(dt);
+```
+
+В booking это нужно, чтобы `DateTime` превратить в понятное время `14:30`.
+
+### 3.17. UI-библиотеки
+
+В проекте есть несколько пакетов для UI:
+
+- `google_fonts` — подключает шрифт Inter;
+- `flutter_animate` — добавляет цепочки анимаций;
+- `flutter_svg` — рендерит SVG, например логотип;
+- `smooth_page_indicator` — точки/индикатор страниц в onboarding.
+
+Они не отвечают за бизнес-логику. Если приложение не записывает пациента на приём, проблема почти точно не в этих пакетах.
+
+### 3.18. Flutter-платформы: почему есть android/ios/web/linux/macos/windows
+
+Flutter пишет UI один раз на Dart, но для запуска нужен нативный контейнер каждой платформы.
+
+```text
+lib/          общий Dart/Flutter код
+android/      Android runner, manifest, Gradle
+ios/          iOS runner, plist, Xcode project
+web/          HTML/PWA shell
+linux/        Linux desktop runner
+macos/        macOS desktop runner
+windows/      Windows desktop runner
+```
+
+Обычно бизнес-логику меняют в `lib/`. Платформенные папки трогают, когда нужны permissions, Firebase config, app icon, bundle id, signing, network policy.
+
+### 3.19. pubspec.yaml: список зависимостей проекта
+
+`pubspec.yaml` — как `package.json` в JS или `composer.json` в PHP. Там указано, какие пакеты нужны приложению.
+
+Фрагмент:
+
+```yaml
+dependencies:
+  go_router: ^17.2.0
+  flutter_riverpod: ^2.6.1
+  dio: ^5.7.0
+  shared_preferences: ^2.5.5
+  flutter_secure_storage: ^9.2.2
+  firebase_messaging: ^15.1.3
+```
+
+Если добавить пакет, нужно выполнить `flutter pub get`. Если удалить пакет из `pubspec.yaml`, импорты этого пакета перестанут компилироваться.
+
+### 3.20. Как отличать «экран», «виджет», «модель», «repository», «controller»
+
+| Термин | Простое объяснение | Пример в проекте |
+|---|---|---|
+| Экран | Большой widget, соответствующий странице | `LoginScreen`, `BookingScreen` |
+| Виджет | Любой кусочек UI | `PrimaryButton`, `ClinicLogo` |
+| Модель | Dart-объект с данными | `ArticleModel`, `AppointmentModel` |
+| Repository | Класс для API-запросов | `BlogRepository`, `BookingRepository` |
+| Controller/Notifier | Класс, который меняет state | `AuthController`, `BookingWizardNotifier` |
+| Provider | Riverpod-источник данных/зависимости | `dioProvider`, `blogPreviewProvider` |
+| State | Текущее состояние | `AuthState`, `BookingWizardState` |
+
+Если видите файл `*_repository.dart`, ищите там URL backend. Если видите `*_providers.dart`, ищите связи Riverpod. Если видите `*_screen.dart`, ищите UI.
+
+## 4. Как приложение работает в целом
 
 ### 3.1. Запуск приложения
 
@@ -2475,7 +2910,217 @@ ref.read(dashboardTabIndexProvider.notifier).state = 3;
 → карточки врачей
 ```
 
-## 21. Глоссарий
+## 21. Как поддерживать приложение дальше
+
+Этот раздел — практическая инструкция для будущей поддержки. Его можно использовать как чеклист перед правками.
+
+### 21.1. Главный алгоритм перед любой правкой
+
+1. Понять, это UI-правка, API-правка, state-правка или platform-правка.
+2. Найти экран, где видно поведение.
+3. Найти providers, которые экран читает.
+4. Найти repository, если данные приходят с backend.
+5. Найти model, если нужно поменять структуру данных.
+6. Проверить router, если меняется переход между экранами.
+7. Проверить local/secure storage, если данные должны сохраняться после перезапуска.
+8. После изменения запустить минимум `flutter analyze` и релевантные тесты, если они есть.
+
+### 21.2. Если нужно поменять текст, цвет или внешний вид
+
+Ищите в таком порядке:
+
+```text
+экран в features/.../*_screen.dart
+→ маленький private widget внутри этого файла
+→ core/constants/app_colors.dart
+→ core/constants/app_text_styles.dart
+→ core/widgets/*
+```
+
+Если цвет используется много раз, лучше добавить/изменить его в `AppColors`, а не хардкодить новый `Color(...)` во всех местах.
+
+### 21.3. Если нужно добавить кнопку или действие
+
+Проверьте:
+
+- где расположен UI;
+- есть ли уже `PrimaryButton` или `OutlineButton`;
+- что должно произойти при `onPressed`;
+- нужен ли API-запрос;
+- нужно ли обновить provider через `ref.invalidate`;
+- нужен ли переход через `context.go` / `context.push`.
+
+Шаблон мышления:
+
+```text
+Кнопка нажата
+→ onPressed
+→ controller/repository method
+→ state/loading/error
+→ UI показывает результат
+```
+
+### 21.4. Если backend поменял JSON
+
+Нужно проверить:
+
+```text
+repository method
+→ model.fromJson
+→ поля модели
+→ UI, который эти поля показывает
+→ обработку null/пустых значений
+```
+
+Не стоит просто писать `json['new_field']` прямо в экране. Лучше обновить модель, чтобы экран работал с нормальным Dart-объектом.
+
+### 21.5. Если нужно добавить новый endpoint
+
+Порядок:
+
+1. Найти подходящий repository или создать новый рядом с похожими.
+2. Добавить метод `Future<...> methodName(...) async`.
+3. Добавить model, если endpoint возвращает новый тип данных.
+4. Добавить provider в `*_providers.dart`.
+5. В экране использовать `ref.watch(provider)`.
+6. Обработать loading/error/data.
+
+Пример структуры:
+
+```dart
+final somethingProvider = FutureProvider<List<Something>>((ref) async {
+  return ref.watch(somethingRepositoryProvider).fetchSomething();
+});
+```
+
+### 21.6. Если нужно изменить авторизацию
+
+Будьте особенно осторожны. Авторизация связана с:
+
+- `AuthStatus`;
+- `AuthController`;
+- `router.dart` redirects;
+- `StorageService`;
+- `SecureStorage`;
+- login/register screens;
+- FCM token sync;
+- backend endpoints.
+
+Перед изменением нарисуйте таблицу сценариев:
+
+| Сценарий | Ожидаемый экран |
+|---|---|
+| новый пользователь | onboarding/auth |
+| зарегистрирован, Face ID выключен | PIN login |
+| зарегистрирован, Face ID включен | Face ID login |
+| token протух | локальный login или auth в зависимости от логики |
+| logout | auth screen |
+
+### 21.7. Если нужно изменить booking
+
+Booking зависит от последовательности шагов. При изменениях проверьте:
+
+- `BookingStep` enum;
+- `_computeSteps`;
+- `BookingWizardState`;
+- `BookingWizardNotifier.select...` методы;
+- step widgets в `presentation/steps`;
+- submit/reschedule;
+- invalidation appointments providers.
+
+Главное правило: если меняется ранний выбор, нужно очистить зависимые поздние выборы. Например, сменили врача — дата и слот должны сброситься.
+
+### 21.8. Если нужно изменить dashboard tabs
+
+Проверьте:
+
+```text
+dashboard_tab_provider.dart
+DashboardScreen IndexedStack children
+_BottomNav items
+все места, где state = 0/1/2/3/4
+Back navigation для вложенных экранов
+```
+
+Опасность: индексы вкладок — это числа. Если поменять порядок вкладок и забыть обновить переходы, кнопка «мои записи» может открыть не тот tab.
+
+### 21.9. Если нужно изменить push-уведомления
+
+Проверьте:
+
+- формат payload от backend;
+- `NotificationPayload.fromData`;
+- `NotificationRouter`;
+- local notification display;
+- регистрацию FCM token в `/devices/register`;
+- Android/iOS permissions.
+
+Push — это всегда связка backend + Firebase + приложение + permissions устройства. Если уведомление не приходит, проблема может быть на любом уровне.
+
+### 21.10. Если приложение не запускается локально
+
+Проверять по порядку:
+
+1. `flutter --version` — установлен ли Flutter.
+2. `flutter pub get` — скачались ли зависимости.
+3. `flutter doctor` — видит ли Flutter платформы/SDK.
+4. `flutter run --dart-define=USE_FIREBASE=false` — если Firebase не настроен.
+5. API base URL: Android emulator обычно использует `10.0.2.2`, а не `localhost`.
+6. Backend должен отдавать `/api/v1`.
+
+Для локального backend из комментариев проекта:
+
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+flutter run --dart-define=API_BASE=http://10.0.2.2:8000/api/v1
+```
+
+### 21.11. Что запускать перед PR
+
+Минимально для документации:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+text = Path('mobileApp/GUIDE.md').read_text(encoding='utf-8')
+assert text.count('`' * 3) % 2 == 0
+PY
+```
+
+Для Flutter-кода:
+
+```bash
+cd mobileApp
+flutter pub get
+flutter analyze
+flutter test
+```
+
+Если менялись Android/iOS permissions, дополнительно нужно руками проверить запуск на соответствующей платформе.
+
+### 21.12. Как не потеряться в проекте
+
+Держите в голове 5 главных маршрутов:
+
+```text
+main.dart
+→ app.dart
+→ router.dart
+→ feature screen
+→ provider/repository/model
+```
+
+И 5 главных вопросов:
+
+1. Где экран?
+2. Где state?
+3. Где API-запрос?
+4. Где модель данных?
+5. Где переход на следующий экран?
+
+Если ответить на эти вопросы, большинство задач поддержки становится понятным.
+
+## 22. Глоссарий
 
 - **Widget** — строительный блок UI во Flutter.
 - **StatefulWidget** — widget с внутренним изменяемым состоянием.
