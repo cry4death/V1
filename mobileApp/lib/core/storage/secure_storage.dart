@@ -21,7 +21,7 @@ class SecureStorage {
     String? refreshToken,
   }) async {
     await _storage.write(key: _keyAccessToken, value: accessToken);
-    if (refreshToken != null) {
+    if (refreshToken != null && refreshToken.isNotEmpty) {
       await _storage.write(key: _keyRefreshToken, value: refreshToken);
     }
   }

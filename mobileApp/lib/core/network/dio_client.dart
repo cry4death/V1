@@ -28,8 +28,11 @@ String get resolvedApiBaseUrl {
   return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
 }
 
+final authSessionExpiredSignalProvider = StateProvider<int>((ref) => 0);
+
 final dioProvider = Provider<Dio>((ref) {
   final secure = ref.watch(secureStorageProvider);
+  Future<String?>? refreshFuture;
 
   final dio = Dio(
     BaseOptions(
@@ -45,7 +48,21 @@ final dioProvider = Provider<Dio>((ref) {
   );
 
   dio.interceptors.add(_AuthInterceptor(secure));
-  dio.interceptors.add(_ErrorInterceptor());
+  dio.interceptors.add(_ErrorInterceptor(
+    dio,
+    secure,
+    onRefreshStarted: () {
+      refreshFuture = _refreshAccessToken(dio, secure);
+      refreshFuture!.whenComplete(() {
+        refreshFuture = null;
+      });
+      return refreshFuture!;
+    },
+    readRefreshFuture: () => refreshFuture,
+    onSessionExpired: () {
+      ref.read(authSessionExpiredSignalProvider.notifier).state++;
+    },
+  ));
 
   return dio;
 });
@@ -60,6 +77,12 @@ class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    if (options.extra['skipAuthRefresh'] == true) {
+      options.headers.remove('Authorization');
+      handler.next(options);
+      return;
+    }
+
     final token = await _storage.readAccessToken();
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -69,16 +92,63 @@ class _AuthInterceptor extends Interceptor {
 }
 
 class _ErrorInterceptor extends Interceptor {
+  final Dio _dio;
+  final SecureStorage _storage;
+  final Future<String?> Function() _onRefreshStarted;
+  final Future<String?>? Function() _readRefreshFuture;
+  final void Function() _onSessionExpired;
+
+  _ErrorInterceptor(
+    this._dio,
+    this._storage, {
+    required Future<String?> Function() onRefreshStarted,
+    required Future<String?>? Function() readRefreshFuture,
+    required void Function() onSessionExpired,
+  })  : _onRefreshStarted = onRefreshStarted,
+        _readRefreshFuture = readRefreshFuture,
+        _onSessionExpired = onSessionExpired;
+
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     final status = err.response?.statusCode;
 
-    if (status == 401) {
+    if (status == 401 && !_isRefreshRequest(err.requestOptions)) {
+      if (err.requestOptions.extra['authRetry'] == true) {
+        await _storage.clear();
+        _onSessionExpired();
+        handler.reject(DioException(
+          requestOptions: err.requestOptions,
+          response: err.response,
+          error: const UnauthorizedException(),
+          type: err.type,
+          stackTrace: err.stackTrace,
+        ));
+        return;
+      }
+
+      final refreshedToken = await _refreshOrWait();
+      if (refreshedToken != null && refreshedToken.isNotEmpty) {
+        try {
+          final response = await _retry(err.requestOptions, refreshedToken);
+          handler.resolve(response);
+          return;
+        } on DioException catch (retryError) {
+          handler.reject(_wrapError(retryError));
+          return;
+        }
+      }
+
+      await _storage.clear();
+      _onSessionExpired();
       handler.reject(DioException(
         requestOptions: err.requestOptions,
         response: err.response,
         error: const UnauthorizedException(),
         type: err.type,
+        stackTrace: err.stackTrace,
       ));
       return;
     }
@@ -90,7 +160,82 @@ class _ErrorInterceptor extends Interceptor {
       response: err.response,
       error: ApiException(message, statusCode: status, raw: err),
       type: err.type,
+      stackTrace: err.stackTrace,
     ));
+  }
+
+  Future<String?> _refreshOrWait() async {
+    final activeRefresh = _readRefreshFuture();
+    if (activeRefresh != null) {
+      return activeRefresh;
+    }
+
+    return _onRefreshStarted();
+  }
+
+  bool _isRefreshRequest(RequestOptions options) {
+    return options.path.endsWith('/auth/refresh') ||
+        options.extra['skipAuthRefresh'] == true;
+  }
+
+  Future<Response<dynamic>> _retry(
+    RequestOptions requestOptions,
+    String token,
+  ) {
+    final headers = Map<String, dynamic>.from(requestOptions.headers);
+    headers['Authorization'] = 'Bearer $token';
+    final options = Options(
+      method: requestOptions.method,
+      sendTimeout: requestOptions.sendTimeout,
+      receiveTimeout: requestOptions.receiveTimeout,
+      extra: {
+        ...requestOptions.extra,
+        'authRetry': true,
+      },
+      headers: headers,
+      responseType: requestOptions.responseType,
+      contentType: requestOptions.contentType,
+      validateStatus: requestOptions.validateStatus,
+      receiveDataWhenStatusError: requestOptions.receiveDataWhenStatusError,
+      followRedirects: requestOptions.followRedirects,
+      maxRedirects: requestOptions.maxRedirects,
+      requestEncoder: requestOptions.requestEncoder,
+      responseDecoder: requestOptions.responseDecoder,
+    );
+
+    return _dio.request<dynamic>(
+      requestOptions.path,
+      data: requestOptions.data,
+      queryParameters: requestOptions.queryParameters,
+      options: options,
+      cancelToken: requestOptions.cancelToken,
+      onSendProgress: requestOptions.onSendProgress,
+      onReceiveProgress: requestOptions.onReceiveProgress,
+    );
+  }
+
+  DioException _wrapError(DioException err) {
+    final status = err.response?.statusCode;
+
+    if (status == 401) {
+      return DioException(
+        requestOptions: err.requestOptions,
+        response: err.response,
+        error: const UnauthorizedException(),
+        type: err.type,
+        stackTrace: err.stackTrace,
+      );
+    }
+
+    final message = _extractMessage(err);
+
+    return DioException(
+      requestOptions: err.requestOptions,
+      response: err.response,
+      error: ApiException(message, statusCode: status, raw: err),
+      type: err.type,
+      stackTrace: err.stackTrace,
+    );
   }
 
   String _extractMessage(DioException err) {
@@ -108,5 +253,44 @@ class _ErrorInterceptor extends Interceptor {
       }
     }
     return err.message ?? 'Network error';
+  }
+}
+
+Future<String?> _refreshAccessToken(Dio dio, SecureStorage storage) async {
+  final refreshToken = await storage.readRefreshToken();
+  if (refreshToken == null || refreshToken.isEmpty) {
+    await storage.clear();
+    return null;
+  }
+
+  try {
+    final response = await dio.post<Map<String, dynamic>>(
+      '/auth/refresh',
+      data: {'refresh_token': refreshToken},
+      options: Options(
+        extra: {'skipAuthRefresh': true},
+      ),
+    );
+    final data = response.data?['data'];
+    if (data is! Map<String, dynamic>) {
+      await storage.clear();
+      return null;
+    }
+
+    final token = data['token'];
+    final nextRefreshToken = data['refresh_token'];
+    if (token is! String || token.isEmpty) {
+      await storage.clear();
+      return null;
+    }
+
+    await storage.saveTokens(
+      accessToken: token,
+      refreshToken: nextRefreshToken is String ? nextRefreshToken : null,
+    );
+    return token;
+  } catch (_) {
+    await storage.clear();
+    return null;
   }
 }

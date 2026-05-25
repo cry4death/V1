@@ -74,6 +74,7 @@ class _LoginOtpScreenState extends ConsumerState<LoginOtpScreen> {
           );
       await ref.read(authControllerProvider.notifier).completeLoginWithApiToken(
             accessToken: result.token,
+            refreshToken: result.refreshToken,
             patient: result.patient,
           );
       if (!mounted) return;

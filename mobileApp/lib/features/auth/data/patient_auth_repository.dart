@@ -28,7 +28,7 @@ class PatientAuthRepository {
     );
   }
 
-  Future<({String token, Map<String, dynamic> patient})> registerVerify({
+  Future<({String token, String? refreshToken, Map<String, dynamic> patient})> registerVerify({
     /// Должен совпадать с номером в [registerRequestOtp] (E.164 без «+»).
     required String phone,
     required String otp,
@@ -53,7 +53,7 @@ class PatientAuthRepository {
     );
   }
 
-  Future<({String token, Map<String, dynamic> patient})> verifyLoginOtp({
+  Future<({String token, String? refreshToken, Map<String, dynamic> patient})> verifyLoginOtp({
     required String phone,
     required String otp,
   }) async {
@@ -110,7 +110,7 @@ class PatientAuthRepository {
     await _dio.post<Map<String, dynamic>>('/me/logout');
   }
 
-  static ({String token, Map<String, dynamic> patient}) _parseTokenAndPatient(
+  static ({String token, String? refreshToken, Map<String, dynamic> patient}) _parseTokenAndPatient(
     Response<Map<String, dynamic>> res,
   ) {
     final data = res.data?['data'];
@@ -118,10 +118,15 @@ class PatientAuthRepository {
       throw StateError('Invalid API response: missing data');
     }
     final token = data['token'];
+    final refreshToken = data['refresh_token'];
     final patient = data['patient'];
     if (token is! String || patient is! Map<String, dynamic>) {
       throw StateError('Invalid API response: token or patient');
     }
-    return (token: token, patient: patient);
+    return (
+      token: token,
+      refreshToken: refreshToken is String ? refreshToken : null,
+      patient: patient,
+    );
   }
 }

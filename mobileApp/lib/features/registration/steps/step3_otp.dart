@@ -92,6 +92,7 @@ class _Step3OtpState extends ConsumerState<Step3Otp> {
 
       await ref.read(authControllerProvider.notifier).completeRegistrationWithApiToken(
             accessToken: result.token,
+            refreshToken: result.refreshToken,
             firstName: first,
             lastName: last,
             phone: phone,
