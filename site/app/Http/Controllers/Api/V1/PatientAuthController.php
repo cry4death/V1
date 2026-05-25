@@ -26,6 +26,9 @@ class PatientAuthController extends Controller
     /** Срок жизни refresh-токена в днях. */
     private const REFRESH_TTL_DAYS = 90;
 
+    /** Срок жизни access-токена в минутах. */
+    private const ACCESS_TTL_MINUTES = 60;
+
     public function __construct(
         private readonly PatientOtpService $patientOtpService,
     ) {}
@@ -220,7 +223,11 @@ class PatientAuthController extends Controller
     private function issueTokens(Patient $patient): array
     {
         // Access token — Sanctum personal access token
-        $accessToken = $patient->createToken('mobile')->plainTextToken;
+        $accessToken = $patient->createToken(
+            'mobile',
+            ['*'],
+            now()->addMinutes(self::ACCESS_TTL_MINUTES),
+        )->plainTextToken;
 
         // Refresh token — 64 случайных байта, хранится SHA-256 хешем
         $rawRefresh = Str::random(64);
