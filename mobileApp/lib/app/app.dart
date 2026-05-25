@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/notifications/providers.dart';
+import '../core/network/dio_client.dart';
 import '../features/auth/domain/auth_state.dart';
 import '../features/auth/presentation/controllers/auth_controller.dart';
 import 'router.dart';
@@ -25,6 +26,12 @@ class App extends ConsumerWidget {
       if (current.status == AuthStatus.authenticated &&
           previous?.status != AuthStatus.authenticated) {
         ref.read(pushTokenSyncProvider).resendAfterLogin();
+      }
+    });
+
+    ref.listen<int>(authSessionExpiredSignalProvider, (previous, current) {
+      if (previous != null && current > previous) {
+        ref.read(authControllerProvider.notifier).expireSession();
       }
     });
 

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/storage/providers.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../../../core/storage/storage_service.dart';
@@ -52,13 +53,19 @@ class AuthController extends StateNotifier<AuthState> {
       faceIdEnabled: faceId,
     );
 
-    final token = await _secureStorage.readAccessToken();
-    if (token != null && token.isNotEmpty) {
+    final accessToken = await _secureStorage.readAccessToken();
+    final refreshToken = await _secureStorage.readRefreshToken();
+    if ((accessToken != null && accessToken.isNotEmpty) ||
+        (refreshToken != null && refreshToken.isNotEmpty)) {
       try {
         final p = await _authRepository.me();
         await _applyPatientData(p, keepPhone: phone);
-      } on DioException {
-        // Сеть / протухший токен — остаёмся на локальных данных
+      } on DioException catch (e) {
+        if (e.error is UnauthorizedException || e.response?.statusCode == 401) {
+          await expireSession();
+        }
+      } catch (_) {
+        await expireSession();
       }
     }
   }
@@ -66,6 +73,7 @@ class AuthController extends StateNotifier<AuthState> {
   /// Завершение регистрации после успешной верификации OTP на сервере.
   Future<void> completeRegistrationWithApiToken({
     required String accessToken,
+    String? refreshToken,
     required String firstName,
     required String lastName,
     required String phone,
@@ -73,7 +81,10 @@ class AuthController extends StateNotifier<AuthState> {
     String birthDate = '',
     String gender = '',
   }) async {
-    await _secureStorage.saveTokens(accessToken: accessToken);
+    await _secureStorage.saveTokens(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
     await _storage.saveRegistration(
       firstName: firstName,
       lastName: lastName,
@@ -97,9 +108,13 @@ class AuthController extends StateNotifier<AuthState> {
   /// [registeredLoggedOut] — пользователь должен пройти PIN/биометрию.
   Future<void> completeLoginWithApiToken({
     required String accessToken,
+    String? refreshToken,
     required Map<String, dynamic> patient,
   }) async {
-    await _secureStorage.saveTokens(accessToken: accessToken);
+    await _secureStorage.saveTokens(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
     await _applyPatientData(patient, token: accessToken);
     state = state.copyWith(status: AuthStatus.registeredLoggedOut);
   }
@@ -191,6 +206,16 @@ class AuthController extends StateNotifier<AuthState> {
     await _storage.clear();
     await _secureStorage.clear();
     state = const AuthState(status: AuthStatus.unregistered);
+  }
+
+  Future<void> expireSession() async {
+    await _secureStorage.clear();
+    final isRegistered = await _storage.isRegistered();
+    state = state.copyWith(
+      status: isRegistered
+          ? AuthStatus.registeredLoggedOut
+          : AuthStatus.unregistered,
+    );
   }
 }
 
